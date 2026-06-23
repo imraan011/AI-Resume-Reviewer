@@ -139,3 +139,21 @@ ul,
 ol {
   list-style: none;
 }
+
+/* ─────────────────────────────────────────────
+   Review Page — Responsive Grid
+   Desktop: score + summary side by side
+   Mobile: stacked vertically
+───────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* score + summary column → row pe stacked */
+  [data-review-hero] {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+    text-align: center;
+  }
+
+  [data-review-hero] p {
+    text-align: left;
+  }
+}

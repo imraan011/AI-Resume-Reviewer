@@ -1,285 +1,94 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { gsap } from '@/lib/gsap';
 import GreetingIntro from '@/components/GreetingIntro';
 import UploadZone from '@/components/UploadZone';
+import { HeroBackground, StatPills } from '@/components/HeroElements';
+import { HeroEyebrow, HeroTitle, HeroSubtext } from '@/components/HeroHeadings';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface StatPill {
-  label: string;
-  icon: string;
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const STAT_PILLS: StatPill[] = [
-  { label: 'ATS Score',      icon: '📊' },
-  { label: 'Keyword Match',  icon: '🎯' },
-  { label: 'AI Feedback',    icon: '🤖' },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
+const ANIM = {
+  eyebrow:  { delay: 0.1, duration: 0.6, y: 16 },
+  h1:       { delay: 0.2, duration: 0.85 },
+  subtext:  { delay: 0.4, duration: 0.6,  y: 14 },
+  upload:   { delay: 0.6, duration: 0.7,  y: 20, scale: 0.97 },
+  pills:    { delay: 0.8, duration: 0.5,  y: 12, stagger: 0.1 },
+} as const;
 
 export default function Home() {
-  // intro khatam hone ke baad page animations trigger honge
   const [introComplete, setIntroComplete] = useState(false);
+  const [skipAnim, setSkipAnim]           = useState(false);
+  const router = useRouter();
 
-  // refs — GSAP inhe directly animate karega
-  const eyebrowRef  = useRef<HTMLSpanElement>(null);
-  const h1Ref       = useRef<HTMLHeadingElement>(null);
-  const subtextRef  = useRef<HTMLParagraphElement>(null);
-  const uploadRef   = useRef<HTMLDivElement>(null);
-  const pillsRef    = useRef<HTMLDivElement>(null);
+  const eyebrowRef = useRef<HTMLSpanElement>(null);
+  const h1Ref      = useRef<HTMLHeadingElement>(null);
+  const subtextRef = useRef<HTMLParagraphElement>(null);
+  const uploadRef  = useRef<HTMLDivElement>(null);
+  const pillsRef   = useRef<HTMLDivElement>(null);
 
-  // file upload handler — baad mein AI API call yahan jayegi
+  // analysis mock flow (production api ready hone par change hoga)
   async function handleUpload(file: File): Promise<void> {
-    // TODO: integrate AI review API
-    console.log('Uploading:', file.name);
-    await new Promise((r) => setTimeout(r, 2000)); // demo delay
+    void file;
+    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+    router.push('/review');
   }
-
-  // ─── Mount animations — intro ke baad trigger ──────────────────────────────
 
   useEffect(() => {
     if (!introComplete) return;
 
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-
-    // reduced motion mein seedha sab dikhao
-    if (prefersReducedMotion) {
-      [eyebrowRef, h1Ref, subtextRef, uploadRef].forEach((ref) => {
-        if (ref.current) {
-          ref.current.style.opacity = '1';
-          ref.current.style.transform = 'none';
-        }
+    // session seen ya reduced motion skip
+    if (skipAnim || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const targets = [eyebrowRef.current, h1Ref.current, subtextRef.current, uploadRef.current];
+      targets.forEach((el) => {
+        if (!el) return;
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        el.style.clipPath = 'none';
       });
-      if (pillsRef.current) {
-        const pills = pillsRef.current.querySelectorAll<HTMLElement>('[data-pill]');
-        pills.forEach((p) => { p.style.opacity = '1'; p.style.transform = 'none'; });
-      }
+      pillsRef.current?.querySelectorAll<HTMLElement>('[data-pill]').forEach((p) => {
+        p.style.opacity = '1';
+      });
       return;
     }
 
     const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
 
-    // 1. Eyebrow — fadeUp
-    tl.fromTo(
-      eyebrowRef.current,
-      { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.6 },
-      0.1  // delay
-    );
+    tl.fromTo(eyebrowRef.current, { opacity: 0, y: ANIM.eyebrow.y }, { opacity: 1, y: 0, duration: ANIM.eyebrow.duration }, ANIM.eyebrow.delay);
+    tl.fromTo(h1Ref.current, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: ANIM.h1.duration, ease: 'power3.out' }, ANIM.h1.delay);
+    tl.fromTo(subtextRef.current, { opacity: 0, y: ANIM.subtext.y }, { opacity: 1, y: 0, duration: ANIM.subtext.duration }, ANIM.subtext.delay);
+    tl.fromTo(uploadRef.current, { opacity: 0, y: ANIM.upload.y, scale: ANIM.upload.scale }, { opacity: 1, y: 0, scale: 1, duration: ANIM.upload.duration }, ANIM.upload.delay);
 
-    // 2. H1 — clip-path line reveal (left → right curtain)
-    tl.fromTo(
-      h1Ref.current,
-      { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
-      { clipPath: 'inset(0 0% 0 0)', duration: 0.85, ease: 'power3.out' },
-      0.2
-    );
-
-    // 3. Subtext — fadeUp
-    tl.fromTo(
-      subtextRef.current,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.6 },
-      0.4
-    );
-
-    // 4. Upload zone — fadeUp + subtle scale
-    tl.fromTo(
-      uploadRef.current,
-      { opacity: 0, y: 20, scale: 0.97 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.7 },
-      0.6
-    );
-
-    // 5. Pills — stagger fadeUp
-    if (pillsRef.current) {
-      const pills = pillsRef.current.querySelectorAll<HTMLElement>('[data-pill]');
-      tl.fromTo(
-        pills,
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 },
-        0.8
-      );
+    const pills = pillsRef.current?.querySelectorAll<HTMLElement>('[data-pill]');
+    if (pills?.length) {
+      tl.fromTo(pills, { opacity: 0, y: ANIM.pills.y }, { opacity: 1, y: 0, duration: ANIM.pills.duration, stagger: ANIM.pills.stagger }, ANIM.pills.delay);
     }
 
     return () => { tl.kill(); };
-  }, [introComplete]);
-
-  // ─── Render ────────────────────────────────────────────────────────────────
+  }, [introComplete, skipAnim]);
 
   return (
     <>
-      {/* Multilingual greeting curtain */}
-      <GreetingIntro onComplete={() => setIntroComplete(true)} />
-
-      {/* ── Main page — invisible until intro done ── */}
-      <main
-        style={{
-          opacity: introComplete ? 1 : 0,
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          // CSS-only grid background — very subtle
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
-          padding: '2rem 1.5rem',
+      <GreetingIntro
+        onComplete={(skipped) => {
+          setSkipAnim(skipped ?? false);
+          setIntroComplete(true);
         }}
-      >
-        {/* Radial vignette — depth add karta hai */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'radial-gradient(ellipse 80% 60% at 50% 40%, transparent 30%, rgba(10,10,10,0.85) 100%)',
-            pointerEvents: 'none',
-            zIndex: 0,
-          }}
-        />
+      />
 
-        {/* Accent glow blob — background atmosphere */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '15%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '600px',
-            height: '300px',
-            background: 'radial-gradient(ellipse, rgba(232,255,71,0.05) 0%, transparent 70%)',
-            pointerEvents: 'none',
-            zIndex: 0,
-            filter: 'blur(40px)',
-          }}
-        />
+      <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`, backgroundSize: '60px 60px', padding: '2rem 1.5rem' }}>
+        <HeroBackground />
 
-        {/* ── Content stack ── */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.5rem',
-            maxWidth: '760px',
-            width: '100%',
-            textAlign: 'center',
-          }}
-        >
-          {/* Eyebrow label */}
-          <span
-            ref={eyebrowRef}
-            style={{
-              opacity: 0,
-              display: 'inline-block',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              fontWeight: 500,
-              letterSpacing: '0.2em',
-              color: 'var(--accent)',
-              textTransform: 'uppercase',
-              padding: '5px 14px',
-              border: '1px solid var(--accent-border)',
-              borderRadius: '999px',
-              background: 'var(--accent-dim)',
-            }}
-          >
-            AI-Powered
-          </span>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', maxWidth: '760px', width: '100%', textAlign: 'center' }}>
+          <HeroEyebrow elementRef={eyebrowRef} />
+          <HeroTitle elementRef={h1Ref} />
+          <HeroSubtext elementRef={subtextRef} />
 
-          {/* H1 — clip-path reveal needs overflow hidden */}
-          <div style={{ overflow: 'hidden', lineHeight: 1 }}>
-            <h1
-              ref={h1Ref}
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(2.8rem, 8vw, 72px)',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.03em',
-                lineHeight: 1.08,
-                // clipPath starts set inline; GSAP animates it
-              }}
-            >
-              Resume{' '}
-              <span style={{ color: 'var(--accent)' }}>Reviewer</span>
-            </h1>
-          </div>
-
-          {/* Subtext */}
-          <p
-            ref={subtextRef}
-            style={{
-              opacity: 0,
-              fontFamily: 'var(--font-body)',
-              fontSize: '16px',
-              color: 'var(--text-secondary)',
-              maxWidth: '440px',
-              lineHeight: 1.65,
-              letterSpacing: '0.01em',
-            }}
-          >
-            Drop your PDF. Get brutal honesty.
-          </p>
-
-          {/* ── Upload Zone — real component ── */}
           <div ref={uploadRef} style={{ opacity: 0, width: '100%' }}>
             <UploadZone onUpload={handleUpload} />
           </div>
 
-          {/* ── Stat Pills ── */}
-          <div
-            ref={pillsRef}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.75rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            {STAT_PILLS.map(({ label, icon }) => (
-              <div
-                key={label}
-                data-pill
-                style={{
-                  opacity: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  borderRadius: '999px',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-card)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.01em',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <span style={{ fontSize: '14px' }}>{icon}</span>
-                {label}
-              </div>
-            ))}
-          </div>
+          <StatPills containerRef={pillsRef} />
         </div>
       </main>
     </>
