@@ -192,3 +192,76 @@ body::before {
   z-index: 99999;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
+
+/* ─────────────────────────────────────────────
+   Print-Friendly Stylesheets
+   (PDF generation formatting)
+───────────────────────────────────────────── */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  body::before {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    color: #111111 !important;
+  }
+
+  /* Hide print-exempt interactive elements */
+  .no-print,
+  button,
+  .magnetic-btn-analyze,
+  svg.animate-spin,
+  .custom-cursor {
+    display: none !important;
+  }
+
+  /* Show all collapsed sections */
+  [data-card] {
+    page-break-inside: avoid !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    color: #111111 !important;
+    box-shadow: none !important;
+  }
+
+  [data-card] > div:last-child {
+    max-height: none !important;
+    opacity: 1 !important;
+    display: block !important;
+  }
+
+  /* Make sure grids are formatted nicely on print (stack them) */
+  .grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  /* High contrast colors for print */
+  h1, h2, h3, h4, h5, h6 {
+    color: #000000 !important;
+  }
+
+  p, span, li, div {
+    color: #222222 !important;
+  }
+}

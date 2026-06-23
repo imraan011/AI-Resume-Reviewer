@@ -8,6 +8,7 @@ import KeywordChecker from '@/components/KeywordChecker';
 import CircularScore from '@/components/CircularScore';
 import SectionScoreBar from '@/components/SectionScoreBar';
 import JDMatchCard from '@/components/JDMatchCard';
+import ReviewSkeleton from '@/components/ReviewSkeleton';
 import { gsap } from '@/lib/gsap';
 import { useGSAP } from '@gsap/react';
 import { cardHoverEffect } from '@/lib/animations';
@@ -17,6 +18,24 @@ export default function ReviewPage() {
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('Link copied!');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleDownloadPdf = () => {
+    setIsGeneratingPdf(true);
+    
+    // print window cleanup listener register kiya hai
+    const handleAfterPrint = () => {
+      setIsGeneratingPdf(false);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+    
+    window.addEventListener('afterprint', handleAfterPrint);
+    
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  };
 
   // animation elements references
   const pageRef = useRef<HTMLDivElement>(null);
@@ -28,8 +47,26 @@ export default function ReviewPage() {
   const issuesRef = useRef<HTMLDivElement>(null);
   const actionRef = useRef<HTMLDivElement>(null);
 
-  // local session cache check
+  // local session cache and URL param check
   useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const urlData = queryParams.get('data');
+    
+    if (urlData) {
+      try {
+        // Base64 decode matching unicode characters
+        const decoded = window.atob(urlData).split('').map((c) => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join('');
+        const parsed = JSON.parse(decodeURIComponent(decoded));
+        setReview(parsed);
+        setLoading(false);
+        return;
+      } catch (err) {
+        console.error('Failed to parse shareable link data:', err);
+      }
+    }
+
     const data = sessionStorage.getItem('reviewResult');
     if (!data) {
       router.replace('/');
@@ -107,21 +144,36 @@ export default function ReviewPage() {
   }, { dependencies: [review], scope: pageRef });
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2000);
+    if (!review) return;
+    try {
+      // safe UTF-8 base64 encoding
+      const str = JSON.stringify(review);
+      const base64 = window.btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      }));
+      
+      const shareUrl = `${window.location.origin}${window.location.pathname}?data=${base64}`;
+      navigator.clipboard.writeText(shareUrl);
+      
+      if (base64.length > 2000) {
+        setToastMessage('Link copied! Warning: Link is long, may truncate.');
+      } else {
+        setToastMessage('Link copied!');
+      }
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 3000);
+    } catch (err) {
+      console.error('Failed to generate shareable link:', err);
+      navigator.clipboard.writeText(window.location.href);
+      setToastMessage('Link copied!');
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 2000);
+    }
   };
 
-  // Loading skeleton layout (theme variables compliant)
+  // ReviewSkeleton component show karo jab tak data load ho raha hai
   if (loading) {
-    return (
-      <main className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-secondary)] flex flex-col items-center justify-center p-6 space-y-4">
-        <div className="w-12 h-12 border-2 border-[var(--border-subtle)] border-t-[var(--accent)] rounded-full animate-spin" />
-        <p className="text-sm font-mono tracking-wider uppercase text-neutral-500">
-          Loading resume analysis...
-        </p>
-      </main>
-    );
+    return <ReviewSkeleton />;
   }
 
   if (!review) return null;
@@ -129,7 +181,7 @@ export default function ReviewPage() {
   return (
     <main ref={pageRef} className="opacity-0 min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] w-full max-w-5xl mx-auto px-4 sm:px-8 py-12 flex flex-col gap-10">
       {/* Back button segment - Minimal text style */}
-      <div ref={backBtnRef} className="opacity-0 flex justify-start items-center">
+      <div ref={backBtnRef} className="opacity-0 flex justify-start items-center no-print">
         <button
           onClick={() => router.push('/')}
           className="text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-200 flex items-center gap-1 cursor-pointer"
@@ -208,7 +260,7 @@ export default function ReviewPage() {
       </div>
 
       {/* review reset trigger action with clipboard share */}
-      <div ref={actionRef} className="opacity-0 flex flex-col sm:flex-row justify-center items-center gap-4 pt-6 relative">
+      <div ref={actionRef} className="opacity-0 flex flex-col sm:flex-row justify-center items-center gap-4 pt-6 relative no-print">
         <button
           onClick={() => router.push('/')}
           className="magnetic-btn-analyze w-full sm:w-auto px-8 py-3.5 bg-[var(--accent)] hover:brightness-110 active:scale-98 transition-all font-display font-bold text-[14px] uppercase tracking-[0.05em] rounded-[4px] text-white cursor-pointer shadow-[0_4px_20px_var(--accent-glow)]"
@@ -221,11 +273,25 @@ export default function ReviewPage() {
         >
           Share Results
         </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={isGeneratingPdf}
+          className="w-full sm:w-auto px-8 py-3.5 border border-[var(--accent-border)] hover:bg-[var(--accent-dim)] bg-transparent active:scale-98 transition-all font-display font-bold text-[14px] uppercase tracking-[0.05em] rounded-[4px] text-white cursor-pointer flex items-center justify-center gap-2"
+        >
+          {isGeneratingPdf ? (
+            <>
+              <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <span>Generating...</span>
+            </>
+          ) : (
+            'Download PDF'
+          )}
+        </button>
 
         {/* Floating Toast Notification */}
         {toastVisible && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--accent)] text-xs font-mono px-4 py-2 rounded shadow-lg animate-fade-in duration-200">
-            Link copied!
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--accent)] text-xs font-mono px-4 py-2 rounded shadow-lg animate-fade-in duration-200 text-center max-w-[280px] sm:max-w-none">
+            {toastMessage}
           </div>
         )}
       </div>
