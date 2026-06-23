@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Syne, Inter } from 'next/font/google';
-import SmoothLayout from '@/components/SmoothLayout';
+import SmoothScroll from '@/components/SmoothScroll';
 import CustomCursor from '@/components/CustomCursor';
 import './globals.css';
 
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     'Get instant, AI-powered feedback on your resume. Cinematic dark UI for serious job seekers.',
 };
 
-// layout.tsx server component hi rahega — SmoothLayout client hai
+// layout.tsx server component hi rahega — SmoothScroll client hai
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,11 +42,11 @@ export default function RootLayout({
       }}
     >
       <body>
-        {/* SmoothLayout Lenis + GSAP ticker ko initialize karta hai */}
-        <SmoothLayout>
+        {/* SmoothScroll Lenis + GSAP ticker ko initialize karta hai */}
+        <SmoothScroll>
           <CustomCursor />
           {children}
-        </SmoothLayout>
+        </SmoothScroll>
       </body>
     </html>
   );
