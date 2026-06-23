@@ -121,8 +121,8 @@ export default function UploadZone({ onUpload, isLoading }: UploadZoneProps) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={triggerBrowse}
-        className={`w-full h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-all duration-200 bg-neutral-900
-          ${isDragging ? 'border-lime-400 bg-lime-400/5' : 'border-neutral-700 hover:border-neutral-600'}
+        className={`w-full h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-all duration-200 bg-[var(--bg-card)]
+          ${isDragging ? 'border-[var(--accent)] bg-[var(--accent-dim)]' : 'border-[var(--border-subtle)] hover:border-neutral-700'}
           ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >

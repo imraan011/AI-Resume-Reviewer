@@ -32,6 +32,7 @@ export interface ReviewResult {
   sections: FeedbackSection[];
   keywords: KeywordMatch[];
   summary: string;
+  topIssues: string[];
 }
 
 // File upload flow aur transition states

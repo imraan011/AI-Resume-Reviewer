@@ -52,6 +52,7 @@
 
 /* anchor links smoothly scroll karenge */
 html {
+  width: 100%;
   scroll-behavior: smooth;
   color-scheme: dark;
   height: 100%;
@@ -90,6 +91,7 @@ html {
    Body Defaults
 ───────────────────────────────────────────── */
 body {
+  width: 100%;
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -101,6 +103,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+.smooth-layout {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 /* ─────────────────────────────────────────────
