@@ -49,14 +49,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { resumeText } = await request.json();
+    const { resumeText, jobDescription } = await request.json();
 
     if (!resumeText || typeof resumeText !== 'string' || !resumeText.trim()) {
       return NextResponse.json({ error: 'Missing resume text input.' }, { status: 400 });
     }
 
-    // Call Groq API analysis service
-    const result = await analyzeResume(resumeText);
+    // Call Groq API analysis service with optional job description matching
+    const result = await analyzeResume(resumeText, jobDescription);
 
     return NextResponse.json(result);
   } catch (error) {

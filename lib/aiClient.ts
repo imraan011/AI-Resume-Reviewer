@@ -12,8 +12,9 @@ function getGroqClient(): Groq {
   return groqClient;
 }
 
-// System prompt instructing the AI to act as an ATS reviewer and return the new JSON structure
-const SYSTEM_PROMPT = `
+// System prompt ko dynamic banane ke liye helper function define kiya hai
+function getSystemPrompt(hasJd: boolean): string {
+  return `
 You are an expert ATS (Applicant Tracking System) reviewer.
 Analyze the provided resume text and return a structured review feedback in JSON format.
 Be extremely honest, brutal, and constructive.
@@ -68,7 +69,17 @@ You MUST return ONLY a JSON object conforming strictly to this JSON structure:
     { "word": "Docker", "found": boolean, "importance": "high" | "medium" | "low" },
     { "word": "Agile", "found": boolean, "importance": "high" | "medium" | "low" }
   ],
-  "topIssues": ["most critical problem 1", "most critical problem 2", "most critical problem 3"]
+  "topIssues": ["most critical problem 1", "most critical problem 2", "most critical problem 3"],
+  "jdMatch": ${
+    hasJd
+      ? `{
+    "matchScore": number (0-100),
+    "matchedSkills": ["skill1", "skill2"],
+    "missingSkills": ["skill3", "skill4"],
+    "recommendation": "one line advice"
+  }`
+      : 'null'
+  }
 }
 
 Rules for the AI:
@@ -77,16 +88,30 @@ Rules for the AI:
 - Check for quantifiable achievements (numbers, percentages).
 - Check for ATS-unfriendly elements (tables, columns, graphics).
 - Keywords to check: React, Node.js, TypeScript, JavaScript, Git, REST API, MongoDB, SQL, Python, AWS, Docker, Agile.
+${
+  hasJd
+    ? '- Since a target Job Description is provided, evaluate the candidate\'s alignment with its core requirements. Calculate a realistic "matchScore" based on how well the resume meets the requirements of the job description. Populate "matchedSkills", "missingSkills", and "recommendation" based on the job description. Focus the "ATS Compatibility" and "Skills Section" feedbacks heavily on that specific Job Description.'
+    : '- Since no Job Description is provided, "jdMatch" MUST be set to null.'
+}
 - Return ONLY JSON, nothing else. Do not wrap in markdown codeblocks like \`\`\`json.
 `;
+}
 
 // resume text analyze karke structured feedback generate karne ka helper
-export async function analyzeResume(resumeText: string): Promise<ReviewResult> {
+export async function analyzeResume(resumeText: string, jobDescription?: string): Promise<ReviewResult> {
+  const hasJd = !!(jobDescription && jobDescription.trim());
+  let userContent = `Resume text to analyze:\n\n${resumeText}`;
+  if (hasJd) {
+    userContent += `\n\nTarget Job Description to match against:\n\n${jobDescription}`;
+  }
+
+  const systemPrompt = getSystemPrompt(hasJd);
+
   const response = await getGroqClient().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Resume text to analyze:\n\n${resumeText}` },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent },
     ],
     response_format: { type: 'json_object' },
     temperature: 0.2,

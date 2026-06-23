@@ -11,6 +11,9 @@ import CustomCursor from '@/components/CustomCursor';
 export default function Home() {
   const [loadingStep, setLoadingStep] = useState<'idle' | 'extracting' | 'reviewing'>('idle');
   const [introFinished, setIntroFinished] = useState(false);
+  const [jdEnabled, setJdEnabled] = useState(false);
+  const [jobDescription, setJobDescription] = useState('');
+  const [jdExpanded, setJdExpanded] = useState(false);
   const router = useRouter();
 
   const isLoading = loadingStep !== 'idle';
@@ -55,11 +58,14 @@ export default function Home() {
 
       setLoadingStep('reviewing');
 
-      // 2. Groq review generator call step
+      // 2. Groq review generator call step with optional job description matching
       const reviewRes = await fetch('/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeText: text }),
+        body: JSON.stringify({ 
+          resumeText: text,
+          jobDescription: jdEnabled && jobDescription.trim() ? jobDescription.trim() : undefined
+        }),
       });
       if (!reviewRes.ok) {
         let msg = 'Failed to generate review.';
@@ -239,7 +245,7 @@ export default function Home() {
         {/* glassmorphic input wrapper */}
         <div
           ref={uploadRef}
-          className="opacity-0 w-full"
+          className="opacity-0 w-full flex flex-col gap-4"
         >
           <UploadZone 
             onUpload={handleUpload} 
@@ -252,6 +258,94 @@ export default function Home() {
                 : undefined
             }
           />
+
+          {/* Job description section collapsible card */}
+          <div className="border border-[var(--border-subtle)] rounded-xl bg-[rgba(255,255,255,0.015)] backdrop-blur-sm overflow-hidden transition-all duration-300 text-left">
+            {/* click collapsible header block */}
+            <div
+              onClick={() => setJdExpanded(!jdExpanded)}
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/[0.01] transition-colors select-none"
+            >
+              <div className="flex items-center gap-2.5">
+                {/* rotate icon based on panel state */}
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`transition-transform duration-300 text-neutral-400 ${
+                    jdExpanded ? 'rotate-90' : ''
+                  }`}
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+                <span className="text-[11px] font-mono tracking-wider text-[var(--text-secondary)] uppercase">
+                  Match against a Job Description (optional)
+                </span>
+              </div>
+
+              {/* enable matching toggle controller */}
+              <div className="flex items-center gap-3">
+                <span
+                  className={`text-[9px] font-mono tracking-wider ${
+                    jdEnabled ? 'text-[var(--accent)] font-bold' : 'text-neutral-600'
+                  }`}
+                >
+                  {jdEnabled ? 'ENABLED' : 'DISABLED'}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const nextVal = !jdEnabled;
+                    setJdEnabled(nextVal);
+                    if (nextVal) {
+                      setJdExpanded(true);
+                    }
+                  }}
+                  disabled={isLoading}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-250 ease-in-out focus:outline-none ${
+                    jdEnabled ? 'bg-[var(--accent)]' : 'bg-neutral-800'
+                  } ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-250 ease-in-out ${
+                      jdEnabled ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible panel inputs wrapper */}
+            <div
+              className="transition-all duration-300 ease-[var(--ease-expo)] overflow-hidden"
+              style={{
+                maxHeight: jdExpanded ? '240px' : '0px',
+              }}
+            >
+              <div className="p-4 pt-0 border-t border-[var(--border-subtle)] space-y-3">
+                <textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value.slice(0, 2000))}
+                  placeholder="Paste the target job description here to analyze resume match score, identify missing skills, and get personalized alignment feedback..."
+                  className="w-full h-28 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg p-3 text-xs text-[var(--text-primary)] placeholder-neutral-600 focus:outline-none focus:border-[var(--accent)] transition-colors resize-none font-sans mt-3"
+                  disabled={isLoading}
+                />
+                
+                <div className="flex justify-between items-center text-[10px] font-mono text-[var(--text-secondary)]">
+                  <span>{jobDescription.length} / 2000 characters</span>
+                  {jobDescription.length >= 1800 && (
+                    <span className="text-[var(--danger)] animate-pulse">Approaching character limit</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Feature stats row block */}

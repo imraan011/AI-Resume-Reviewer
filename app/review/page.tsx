@@ -7,6 +7,7 @@ import ScoreCard from '@/components/ScoreCard';
 import KeywordChecker from '@/components/KeywordChecker';
 import CircularScore from '@/components/CircularScore';
 import SectionScoreBar from '@/components/SectionScoreBar';
+import JDMatchCard from '@/components/JDMatchCard';
 import { gsap } from '@/lib/gsap';
 import { useGSAP } from '@gsap/react';
 import { cardHoverEffect } from '@/lib/animations';
@@ -21,6 +22,7 @@ export default function ReviewPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const backBtnRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const jdMatchRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
   const keywordsRef = useRef<HTMLDivElement>(null);
   const issuesRef = useRef<HTMLDivElement>(null);
@@ -63,6 +65,11 @@ export default function ReviewPage() {
 
     // Hero assessment circular meter and text reveal
     tl.fromTo(heroRef.current, { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.65 }, '-=0.25');
+
+    // JD Match details panel if present
+    if (jdMatchRef.current) {
+      tl.fromTo(jdMatchRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.35');
+    }
 
     // Score cards stagger reveal
     if (cardsRef.current) {
@@ -144,6 +151,13 @@ export default function ReviewPage() {
           <p className="text-[var(--text-secondary)] text-base leading-relaxed">{review.summary}</p>
         </div>
       </div>
+
+      {/* Job Description Match Analysis (only if jdMatch is provided) */}
+      {review.jdMatch && (
+        <div ref={jdMatchRef} className="opacity-0 w-full">
+          <JDMatchCard jdMatch={review.jdMatch} />
+        </div>
+      )}
 
       {/* Horizontal rule separator */}
       <hr className="border-[var(--border-subtle)] my-2" />

@@ -26,6 +26,13 @@ export interface KeywordMatch {
   importance: 'high' | 'medium' | 'low';
 }
 
+export interface JdMatch {
+  matchScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  recommendation: string;
+}
+
 // Complete AI review engine analysis response
 export interface ReviewResult {
   overallScore: number;
@@ -33,6 +40,7 @@ export interface ReviewResult {
   keywords: KeywordMatch[];
   summary: string;
   topIssues: string[];
+  jdMatch: JdMatch | null;
 }
 
 // File upload flow aur transition states
