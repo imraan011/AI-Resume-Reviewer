@@ -24,7 +24,6 @@ export function counterAnimate(
     return null;
   }
 
-  // proxy object jiske value attribute ko gsap interpolate karega
   const counter = { value: 0 };
 
   return gsap.to(counter, {
@@ -64,6 +63,59 @@ export function cardHoverEffect(selector: string): (() => void) | null {
   return () => {
     handlers.forEach(({ el, enter, leave }) => {
       el.removeEventListener('mouseenter', enter);
+      el.removeEventListener('mouseleave', leave);
+    });
+  };
+}
+
+// buttons par magnetic cursor-attract pull effect setup karne ke liye helper
+export function magneticEffect(selector: string): (() => void) | null {
+  const elements = document.querySelectorAll<HTMLElement>(selector);
+  if (!elements.length) return null;
+
+  if (prefersReducedMotion()) return null;
+
+  const cleanups: Array<{
+    el: HTMLElement;
+    move: (e: MouseEvent) => void;
+    leave: () => void;
+  }> = [];
+
+  elements.forEach((el) => {
+    const move = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const offsetX = e.clientX - centerX;
+      const offsetY = e.clientY - centerY;
+
+      // distance multiplier ke saath mouse path par pull apply karo
+      gsap.to(el, {
+        x: offsetX * 0.35,
+        y: offsetY * 0.35,
+        duration: 0.3,
+        ease: 'power2.out',
+      });
+    };
+
+    const leave = () => {
+      // release par elastic pull bounce ke saath spring-back trigger karo
+      gsap.to(el, {
+        x: 0,
+        y: 0,
+        duration: 0.5,
+        ease: 'elastic.out(1, 0.3)',
+      });
+    };
+
+    el.addEventListener('mousemove', move);
+    el.addEventListener('mouseleave', leave);
+    cleanups.push({ el, move, leave });
+  });
+
+  return () => {
+    cleanups.forEach(({ el, move, leave }) => {
+      el.removeEventListener('mousemove', move);
       el.removeEventListener('mouseleave', leave);
     });
   };

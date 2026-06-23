@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Syne, Inter } from 'next/font/google';
 import SmoothLayout from '@/components/SmoothLayout';
+import CustomCursor from '@/components/CustomCursor';
 import './globals.css';
 
 // headings ke liye — bold geometric feel
@@ -42,7 +43,10 @@ export default function RootLayout({
     >
       <body>
         {/* SmoothLayout Lenis + GSAP ticker ko initialize karta hai */}
-        <SmoothLayout>{children}</SmoothLayout>
+        <SmoothLayout>
+          <CustomCursor />
+          {children}
+        </SmoothLayout>
       </body>
     </html>
   );

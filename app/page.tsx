@@ -23,11 +23,12 @@ export default function Home() {
 
   const eyebrowRef = useRef<HTMLSpanElement>(null);
   const h1Ref      = useRef<HTMLHeadingElement>(null);
+  const lineRef    = useRef<HTMLDivElement>(null);
   const subtextRef = useRef<HTMLParagraphElement>(null);
   const uploadRef  = useRef<HTMLDivElement>(null);
   const pillsRef   = useRef<HTMLDivElement>(null);
 
-  // analysis mock flow (production api ready hone par change hoga)
+  // mock upload trigger flow
   async function handleUpload(file: File): Promise<void> {
     void file;
     await new Promise<void>((resolve) => setTimeout(resolve, 2000));
@@ -37,7 +38,6 @@ export default function Home() {
   useEffect(() => {
     if (!introComplete) return;
 
-    // session seen ya reduced motion skip
     if (skipAnim || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const targets = [eyebrowRef.current, h1Ref.current, subtextRef.current, uploadRef.current];
       targets.forEach((el) => {
@@ -46,6 +46,7 @@ export default function Home() {
         el.style.transform = 'none';
         el.style.clipPath = 'none';
       });
+      if (lineRef.current) lineRef.current.style.width = '60px';
       pillsRef.current?.querySelectorAll<HTMLElement>('[data-pill]').forEach((p) => {
         p.style.opacity = '1';
       });
@@ -56,6 +57,7 @@ export default function Home() {
 
     tl.fromTo(eyebrowRef.current, { opacity: 0, y: ANIM.eyebrow.y }, { opacity: 1, y: 0, duration: ANIM.eyebrow.duration }, ANIM.eyebrow.delay);
     tl.fromTo(h1Ref.current, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: ANIM.h1.duration, ease: 'power3.out' }, ANIM.h1.delay);
+    tl.fromTo(lineRef.current, { width: 0 }, { width: 60, duration: 0.8, ease: 'power3.out' }, 0.9); // accent line sweep
     tl.fromTo(subtextRef.current, { opacity: 0, y: ANIM.subtext.y }, { opacity: 1, y: 0, duration: ANIM.subtext.duration }, ANIM.subtext.delay);
     tl.fromTo(uploadRef.current, { opacity: 0, y: ANIM.upload.y, scale: ANIM.upload.scale }, { opacity: 1, y: 0, scale: 1, duration: ANIM.upload.duration }, ANIM.upload.delay);
 
@@ -82,6 +84,10 @@ export default function Home() {
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', maxWidth: '760px', width: '100%', textAlign: 'center' }}>
           <HeroEyebrow elementRef={eyebrowRef} />
           <HeroTitle elementRef={h1Ref} />
+
+          {/* animated thin accent rule */}
+          <div ref={lineRef} style={{ width: 0, height: '1px', backgroundColor: 'var(--accent)', marginTop: '-0.5rem', marginBottom: '0.25rem' }} />
+
           <HeroSubtext elementRef={subtextRef} />
 
           <div ref={uploadRef} style={{ opacity: 0, width: '100%' }}>

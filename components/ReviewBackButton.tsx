@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { gsap } from '@/lib/gsap';
+import { magneticEffect } from '@/lib/animations';
 
 interface ReviewBackButtonProps {
   btnRef: React.RefObject<HTMLButtonElement | null>;
@@ -9,6 +10,12 @@ interface ReviewBackButtonProps {
 }
 
 export function ReviewBackButton({ btnRef, onClick }: ReviewBackButtonProps) {
+  // magnetic effect setup
+  useEffect(() => {
+    const cleanup = magneticEffect('.magnetic-btn-back');
+    return () => { cleanup?.(); };
+  }, []);
+
   // subtle shift left transition on hover
   function onEnter() {
     gsap.to(btnRef.current, { x: -3, color: '#f0f0f0', duration: 0.2 });
@@ -21,6 +28,7 @@ export function ReviewBackButton({ btnRef, onClick }: ReviewBackButtonProps) {
   return (
     <button
       ref={btnRef}
+      className="magnetic-btn-back"
       type="button"
       onClick={onClick}
       onMouseEnter={onEnter}

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { gsap } from '@/lib/gsap';
 import { AnimatedDots } from './UploadZoneIcons';
+import { magneticEffect } from '@/lib/animations';
 
 interface UploadZoneButtonProps {
   isLoading: boolean;
@@ -11,6 +12,12 @@ interface UploadZoneButtonProps {
 
 export function UploadZoneButton({ isLoading, onClick }: UploadZoneButtonProps) {
   const btnRef = useRef<HTMLButtonElement>(null);
+
+  // magnetic button pull effect on mount
+  useEffect(() => {
+    const cleanup = magneticEffect('.magnetic-btn-analyze');
+    return () => { cleanup?.(); };
+  }, []);
 
   // GSAP micro-animations for interactions
   function onEnter() {
@@ -33,6 +40,7 @@ export function UploadZoneButton({ isLoading, onClick }: UploadZoneButtonProps) 
   return (
     <button
       ref={btnRef}
+      className="magnetic-btn-analyze"
       type="button"
       disabled={isLoading}
       onClick={onClick}

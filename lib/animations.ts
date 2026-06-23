@@ -6,4 +6,4 @@
  */
 
 export { fadeUpReveal, lineReveal, staggerReveal } from './animations/reveals';
-export { counterAnimate, cardHoverEffect } from './animations/effects';
+export { counterAnimate, cardHoverEffect, magneticEffect } from './animations/effects';
