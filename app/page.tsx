@@ -1,153 +1,114 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { gsap } from '@/lib/gsap';
-import GreetingIntro from '@/components/GreetingIntro';
 import UploadZone from '@/components/UploadZone';
-import { HeroBackground, StatPills } from '@/components/HeroElements';
-import { HeroEyebrow, HeroTitle, HeroSubtext } from '@/components/HeroHeadings';
-
-const ANIM = {
-  eyebrow:  { delay: 0.1, duration: 0.6, y: 16 },
-  h1:       { delay: 0.2, duration: 0.85 },
-  subtext:  { delay: 0.4, duration: 0.6,  y: 14 },
-  upload:   { delay: 0.6, duration: 0.7,  y: 20, scale: 0.97 },
-  pills:    { delay: 0.8, duration: 0.5,  y: 12, stagger: 0.1 },
-} as const;
 
 export default function Home() {
-  const [introComplete, setIntroComplete] = useState(false);
-  const [skipAnim, setSkipAnim]           = useState(false);
+  // loading state aur router transition hooks mapping
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const eyebrowRef = useRef<HTMLSpanElement>(null);
-  const h1Ref      = useRef<HTMLHeadingElement>(null);
-  const lineRef    = useRef<HTMLDivElement>(null);
-  const subtextRef = useRef<HTMLParagraphElement>(null);
-  const uploadRef  = useRef<HTMLDivElement>(null);
-  const pillsRef   = useRef<HTMLDivElement>(null);
-
-  // analysis API sequence integration
+  // file data upload sequence handler
   async function handleUpload(file: File): Promise<void> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // 1. PDF raw text extraction trigger
-    const extractRes = await fetch('/api/extract', {
-      method: 'POST',
-      body: formData,
-    });
-    if (!extractRes.ok) {
-      let msg = 'Failed to extract text.';
-      try {
-        const err = await extractRes.json();
-        msg = err.error || msg;
-      } catch {
-        msg = `Server Error (${extractRes.status}): Failed to parse extraction response.`;
-      }
-      throw new Error(msg);
-    }
-    
-    let text = '';
+    setIsLoading(true);
     try {
-      const data = await extractRes.json();
-      text = data.text;
-    } catch {
-      throw new Error('Failed to parse text extraction response.');
-    }
+      const formData = new FormData();
+      formData.append('file', file);
 
-    // 2. Groq LLM completion trigger
-    const reviewRes = await fetch('/api/review', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resumeText: text }),
-    });
-    if (!reviewRes.ok) {
-      let msg = 'Failed to generate review.';
-      try {
-        const err = await reviewRes.json();
-        msg = err.error || msg;
-      } catch {
-        msg = `Server Error (${reviewRes.status}): Failed to parse review response.`;
+      // 1. file text extraction step
+      const extractRes = await fetch('/api/extract', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!extractRes.ok) {
+        let msg = 'Failed to extract text.';
+        try {
+          const err = await extractRes.json();
+          msg = err.error || msg;
+        } catch {
+          msg = `Server Error (${extractRes.status}): Failed to parse extraction response.`;
+        }
+        throw new Error(msg);
       }
-      throw new Error(msg);
-    }
-    
-    let result;
-    try {
-      result = await reviewRes.json();
-    } catch {
-      throw new Error('Failed to parse review response.');
-    }
+      
+      let text = '';
+      try {
+        const data = await extractRes.json();
+        text = data.text;
+      } catch {
+        throw new Error('Failed to parse text extraction response.');
+      }
 
-    // sessionStorage update and route shift
-    sessionStorage.setItem('reviewResult', JSON.stringify(result));
-    router.push('/review');
+      // 2. Groq review generator call step
+      const reviewRes = await fetch('/api/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeText: text }),
+      });
+      if (!reviewRes.ok) {
+        let msg = 'Failed to generate review.';
+        try {
+          const err = await reviewRes.json();
+          msg = err.error || msg;
+        } catch {
+          msg = `Server Error (${reviewRes.status}): Failed to parse review response.`;
+        }
+        throw new Error(msg);
+      }
+      
+      let result;
+      try {
+        result = await reviewRes.json();
+      } catch {
+        throw new Error('Failed to parse review response.');
+      }
+
+      // state cache update aur redirect routing
+      sessionStorage.setItem('reviewResult', JSON.stringify(result));
+      router.push('/review');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  useEffect(() => {
-    if (!introComplete) return;
-
-    if (skipAnim || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const targets = [eyebrowRef.current, h1Ref.current, subtextRef.current, uploadRef.current];
-      targets.forEach((el) => {
-        if (!el) return;
-        el.style.opacity = '1';
-        el.style.transform = 'none';
-        el.style.clipPath = 'none';
-      });
-      if (lineRef.current) lineRef.current.style.width = '60px';
-      pillsRef.current?.querySelectorAll<HTMLElement>('[data-pill]').forEach((p) => {
-        p.style.opacity = '1';
-      });
-      return;
-    }
-
-    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-
-    tl.fromTo(eyebrowRef.current, { opacity: 0, y: ANIM.eyebrow.y }, { opacity: 1, y: 0, duration: ANIM.eyebrow.duration }, ANIM.eyebrow.delay);
-    tl.fromTo(h1Ref.current, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: ANIM.h1.duration, ease: 'power3.out' }, ANIM.h1.delay);
-    tl.fromTo(lineRef.current, { width: 0 }, { width: 60, duration: 0.8, ease: 'power3.out' }, 0.9); // accent line sweep
-    tl.fromTo(subtextRef.current, { opacity: 0, y: ANIM.subtext.y }, { opacity: 1, y: 0, duration: ANIM.subtext.duration }, ANIM.subtext.delay);
-    tl.fromTo(uploadRef.current, { opacity: 0, y: ANIM.upload.y, scale: ANIM.upload.scale }, { opacity: 1, y: 0, scale: 1, duration: ANIM.upload.duration }, ANIM.upload.delay);
-
-    const pills = pillsRef.current?.querySelectorAll<HTMLElement>('[data-pill]');
-    if (pills?.length) {
-      tl.fromTo(pills, { opacity: 0, y: ANIM.pills.y }, { opacity: 1, y: 0, duration: ANIM.pills.duration, stagger: ANIM.pills.stagger }, ANIM.pills.delay);
-    }
-
-    return () => { tl.kill(); };
-  }, [introComplete, skipAnim]);
-
   return (
-    <>
-      <GreetingIntro
-        onComplete={(skipped) => {
-          setSkipAnim(skipped ?? false);
-          setIntroComplete(true);
-        }}
-      />
+    <main className="min-h-screen bg-[#0a0a0a] text-neutral-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Cinematic radial gradient glow backing */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-lime-400/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`, backgroundSize: '60px 60px', padding: '2rem 1.5rem' }}>
-        <HeroBackground />
-
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', maxWidth: '760px', width: '100%', textAlign: 'center' }}>
-          <HeroEyebrow elementRef={eyebrowRef} />
-          <HeroTitle elementRef={h1Ref} />
-
-          {/* animated thin accent rule */}
-          <div ref={lineRef} style={{ width: 0, height: '1px', backgroundColor: 'var(--accent)', marginTop: '-0.5rem', marginBottom: '0.25rem' }} />
-
-          <HeroSubtext elementRef={subtextRef} />
-
-          <div ref={uploadRef} style={{ opacity: 0, width: '100%' }}>
-            <UploadZone onUpload={handleUpload} />
-          </div>
-
-          <StatPills containerRef={pillsRef} />
+      <div className="w-full max-w-2xl text-center space-y-8 z-10">
+        {/* Headings intro block */}
+        <div className="space-y-4">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent">
+            Get your resume reviewed by AI
+          </h1>
+          <p className="text-neutral-400 text-lg sm:text-xl font-medium">
+            Upload your PDF and get instant feedback
+          </p>
         </div>
-      </main>
-    </>
+
+        {/* glassmorphic border input wrap */}
+        <div className="bg-neutral-900/40 border border-neutral-800/80 rounded-2xl p-2 backdrop-blur-md">
+          <UploadZone onUpload={handleUpload} isLoading={isLoading} />
+        </div>
+
+        {/* Feature status pills block */}
+        <div className="flex flex-wrap justify-center gap-3 pt-4">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 border border-neutral-800 hover:border-neutral-700/80 transition-colors text-neutral-300 text-sm font-medium">
+            <span className="w-2 h-2 rounded-full bg-lime-400" />
+            ATS Score
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 border border-neutral-800 hover:border-neutral-700/80 transition-colors text-neutral-300 text-sm font-medium">
+            <span className="w-2 h-2 rounded-full bg-lime-400" />
+            Keywords
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 border border-neutral-800 hover:border-neutral-700/80 transition-colors text-neutral-300 text-sm font-medium">
+            <span className="w-2 h-2 rounded-full bg-lime-400" />
+            Formatting
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

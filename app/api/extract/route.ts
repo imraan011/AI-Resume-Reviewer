@@ -16,6 +16,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file was uploaded.' }, { status: 400 });
     }
 
+    // PDF extension aur type check validation logic
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      return NextResponse.json({ error: 'Invalid file type. Please upload a PDF file only.' }, { status: 400 });
+    }
+
     // PDF size check (max 5MB allow hai)
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: 'File is too large. Max size is 5MB.' }, { status: 413 });
