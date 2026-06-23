@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { gsap } from '@/lib/gsap';
 import { cardHoverEffect } from '@/lib/animations';
-import { MOCK_REVIEW, type ReviewResult } from '@/lib/types';
+import { type ReviewResult } from '@/lib/types';
 import { RING_CIRCUMFERENCE, getScoreColor } from '@/components/ScoreRing';
 import { SectionCard } from '@/components/ReviewCards';
 import { ReviewBackButton } from '@/components/ReviewBackButton';
@@ -13,8 +13,23 @@ import { ReviewKeywordsPanel } from '@/components/ReviewKeywordsPanel';
 
 export default function ReviewPage() {
   const router = useRouter();
-  const review: ReviewResult = MOCK_REVIEW;
-  const scoreColor = getScoreColor(review.atsScore);
+  const [review, setReview] = useState<ReviewResult | null>(null);
+
+  // mount context loading from sessionStorage
+  useEffect(() => {
+    const data = sessionStorage.getItem('reviewResult');
+    if (!data) {
+      router.replace('/');
+      return;
+    }
+    try {
+      setReview(JSON.parse(data));
+    } catch {
+      router.replace('/');
+    }
+  }, [router]);
+
+  const scoreColor = review ? getScoreColor(review.atsScore) : 'var(--accent)';
 
   const pageRef       = useRef<HTMLDivElement>(null);
   const backBtnRef    = useRef<HTMLButtonElement>(null);
@@ -25,8 +40,10 @@ export default function ReviewPage() {
   const cardsRef      = useRef<HTMLDivElement>(null);
   const keywordsRef   = useRef<HTMLDivElement>(null);
 
-  // GSAP Entry Reveal Timeline setup
+  // GSAP Entry Reveal Timeline setup triggered after review data loads
   useEffect(() => {
+    if (!review) return;
+
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       if (pageRef.current) pageRef.current.style.opacity = '1';
       if (scoreNumRef.current) scoreNumRef.current.textContent = String(review.atsScore);
@@ -59,13 +76,22 @@ export default function ReviewPage() {
     tl.fromTo(keywordsRef.current, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, '>-0.1');
 
     return () => { tl.kill(); };
-  }, [review.atsScore]);
+  }, [review]);
 
-  // card hover spring lift trigger
+  // card hover spring lift trigger after review data loads
   useEffect(() => {
+    if (!review) return;
     const cleanup = cardHoverEffect('[data-card]');
     return cleanup ?? undefined;
-  }, []);
+  }, [review]);
+
+  if (!review) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
+        Loading analysis result...
+      </div>
+    );
+  }
 
   return (
     <div ref={pageRef} style={{ opacity: 0, minHeight: '100vh', background: 'var(--bg-primary)', padding: 'clamp(24px, 5vw, 60px) clamp(20px, 5vw, 80px)', maxWidth: '1100px', margin: '0 auto', boxSizing: 'border-box' }}>

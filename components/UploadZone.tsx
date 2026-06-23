@@ -63,8 +63,9 @@ export default function UploadZone({ onUpload, className }: UploadZoneProps) {
     setState('loading');
     try {
       await onUpload(file);
-    } catch {
-      setErrorMsg('Something went wrong. Please try again.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setErrorMsg(msg);
       setState('error');
     }
   }

@@ -28,10 +28,61 @@ export default function Home() {
   const uploadRef  = useRef<HTMLDivElement>(null);
   const pillsRef   = useRef<HTMLDivElement>(null);
 
-  // mock upload trigger flow
+  // analysis API sequence integration
   async function handleUpload(file: File): Promise<void> {
-    void file;
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // 1. PDF raw text extraction trigger
+    const extractRes = await fetch('/api/extract', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!extractRes.ok) {
+      let msg = 'Failed to extract text.';
+      try {
+        const err = await extractRes.json();
+        msg = err.error || msg;
+      } catch {
+        msg = `Server Error (${extractRes.status}): Failed to parse extraction response.`;
+      }
+      throw new Error(msg);
+    }
+    
+    let text = '';
+    try {
+      const data = await extractRes.json();
+      text = data.text;
+    } catch {
+      throw new Error('Failed to parse text extraction response.');
+    }
+
+    // 2. Groq LLM completion trigger
+    const reviewRes = await fetch('/api/review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeText: text }),
+    });
+    if (!reviewRes.ok) {
+      let msg = 'Failed to generate review.';
+      try {
+        const err = await reviewRes.json();
+        msg = err.error || msg;
+      } catch {
+        msg = `Server Error (${reviewRes.status}): Failed to parse review response.`;
+      }
+      throw new Error(msg);
+    }
+    
+    let result;
+    try {
+      result = await reviewRes.json();
+    } catch {
+      throw new Error('Failed to parse review response.');
+    }
+
+    // sessionStorage update and route shift
+    sessionStorage.setItem('reviewResult', JSON.stringify(result));
     router.push('/review');
   }
 
