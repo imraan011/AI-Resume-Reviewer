@@ -1,0 +1,141 @@
+/* ─────────────────────────────────────────────
+   Design Tokens — Cinematic Dark Theme
+   AI Resume Reviewer
+───────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-card: #141414;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+
+  /* Typography */
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --text-muted: #444444;
+
+  /* Accent — electric lime, signature color */
+  --accent: #e8ff47;
+  --accent-dim: rgba(232, 255, 71, 0.08);
+  --accent-border: rgba(232, 255, 71, 0.2);
+
+  /* Semantic */
+  --danger: #ff4444;
+  --success: #44ff88;
+
+  /* Border radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* next/font se inject hone wale CSS vars yahan resolve ho rahe hain */
+  --font-display: var(--font-syne), 'Syne', sans-serif;
+  --font-body: var(--font-inter), 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ─────────────────────────────────────────────
+   Base Reset
+───────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* anchor links smoothly scroll karenge */
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+  height: 100%;
+
+  /* Firefox ke liye thin scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) #1a1a1a;
+}
+
+/* Chrome/Safari ke liye custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4eb30;
+}
+
+/* text select hone par lime highlight */
+::selection {
+  background: var(--accent);
+  color: #000;
+}
+
+/* ─────────────────────────────────────────────
+   Body Defaults
+───────────────────────────────────────────── */
+body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────
+   Typography Defaults
+───────────────────────────────────────────── */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ─────────────────────────────────────────────
+   Utility Resets
+   (component zaroorat ke hisaab se bullets wapas laate hain)
+───────────────────────────────────────────── */
+ul,
+ol {
+  list-style: none;
+}
