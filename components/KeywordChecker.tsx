@@ -13,20 +13,19 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
   const totalKeywords = keywords.length;
   const foundCount = foundKeywords.length;
 
-  // hover enter border outline color transition
+  // Pills hover enter event - GSAP scale-up triggers
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-    gsap.to(e.currentTarget, { borderColor: 'var(--accent)', duration: 0.2, overwrite: 'auto' });
+    gsap.to(e.currentTarget, { scale: 1.04, duration: 0.15, ease: 'power2.out' });
   };
 
-  // hover exit border outline reset
-  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>, found: boolean) => {
-    const defaultBorderColor = found ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.15)';
-    gsap.to(e.currentTarget, { borderColor: defaultBorderColor, duration: 0.2, overwrite: 'auto' });
+  // Pills hover exit event - scale-reset
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    gsap.to(e.currentTarget, { scale: 1, duration: 0.15 });
   };
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-6">
-      {/* Title section and count summary metrics */}
+      {/* Title section and metrics summary */}
       <div className="border-b border-[var(--border-subtle)] pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-[var(--text-primary)] font-display">
@@ -41,9 +40,9 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
         </div>
       </div>
 
-      {/* Two columns: Found vs Missing categories grid */}
+      {/* Two columns layout: Found vs Missing */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Found Keywords column */}
+        {/* Found Keywords list */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--success)] font-mono flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)]" />
@@ -54,8 +53,20 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
               <div
                 key={kw.word}
                 onMouseEnter={handleMouseEnter}
-                onMouseLeave={(e) => handleMouseLeave(e, true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(16,185,129,0.25)] bg-[rgba(16,185,129,0.06)] text-[var(--success)] text-xs font-medium transition-colors cursor-default"
+                onMouseLeave={handleMouseLeave}
+                style={{
+                  background: 'rgba(147,185,158,0.08)',
+                  border: '1px solid rgba(147,185,158,0.20)',
+                  color: '#93B99E',
+                  borderRadius: '999px',
+                  padding: '3px 11px',
+                  fontSize: 'var(--font-sm)',
+                  fontFamily: 'var(--font-mono)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'default',
+                }}
               >
                 <span>✓</span>
                 <span>{kw.word}</span>
@@ -78,7 +89,7 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
           </div>
         </div>
 
-        {/* Missing Keywords column */}
+        {/* Missing Keywords list */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--danger)] font-mono flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
@@ -89,8 +100,20 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
               <div
                 key={kw.word}
                 onMouseEnter={handleMouseEnter}
-                onMouseLeave={(e) => handleMouseLeave(e, false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(244,63,94,0.15)] bg-[rgba(244,63,94,0.02)] text-[var(--text-secondary)] line-through text-xs font-medium transition-colors cursor-default"
+                onMouseLeave={handleMouseLeave}
+                style={{
+                  background: 'rgba(218,48,54,0.06)',
+                  border: '1px solid rgba(218,48,54,0.15)',
+                  color: '#DA3036',
+                  borderRadius: '999px',
+                  padding: '3px 11px',
+                  fontSize: 'var(--font-sm)',
+                  fontFamily: 'var(--font-mono)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'default',
+                }}
               >
                 <span>✗</span>
                 <span>{kw.word}</span>

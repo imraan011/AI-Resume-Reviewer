@@ -81,13 +81,13 @@ export default function CircularScore({ score, size = 160 }: CircularScoreProps)
             cy={halfSize}
             r={radius}
             fill="transparent"
-            stroke={activeColor}
+            stroke="var(--accent)"
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             style={{
-              filter: `drop-shadow(0 0 6px ${activeColor}40)`,
+              filter: `drop-shadow(0 0 16px var(--accent-glow))`,
               transition: 'stroke 0.3s ease',
             }}
           />
@@ -97,7 +97,7 @@ export default function CircularScore({ score, size = 160 }: CircularScoreProps)
         <div className="absolute flex flex-col items-center justify-center">
           <span 
             className="text-4xl font-extrabold font-mono transition-colors duration-300"
-            style={{ color: activeColor }}
+            style={{ color: 'var(--accent)' }}
           >
             {currentScore}
           </span>

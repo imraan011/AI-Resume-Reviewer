@@ -93,10 +93,12 @@ function ReviewPageContent() {
       return;
     }
 
+    gsap.set(document.body, { opacity: 0 });
+
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
     // Page fade reveal
-    tl.fromTo(pageRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4 });
+    tl.to(document.body, { opacity: 1, duration: 0.35, ease: 'power2.out' });
     
     // Back button reveal
     tl.fromTo(backBtnRef.current, { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.45 }, '-=0.25');
@@ -111,9 +113,10 @@ function ReviewPageContent() {
 
     // Score cards stagger reveal
     if (cardsRef.current) {
-      tl.fromTo(cardsRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4 }, '-=0.4');
       const cards = cardsRef.current.querySelectorAll('[data-card]');
       if (cards.length) {
+        gsap.set(cards, { opacity: 0 });
+        tl.fromTo(cardsRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4 }, '-=0.4');
         tl.fromTo(cards, { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.08 }, '-=0.35');
       }
     }
@@ -180,21 +183,55 @@ function ReviewPageContent() {
   if (!review) return null;
 
   return (
-    <main ref={pageRef} className="opacity-0 min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] w-full max-w-5xl mx-auto px-4 sm:px-8 py-12 flex flex-col gap-10">
+    <main 
+      ref={pageRef}
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
+        width: '100%',
+        maxWidth: '1120px',
+        margin: '0 auto',
+        padding: 'clamp(32px, 5vw, 80px) var(--nav-side)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '48px',
+      }}
+    >
       {/* Back button segment - Minimal text style */}
       <div ref={backBtnRef} className="opacity-0 flex justify-start items-center no-print">
         <button
           onClick={() => router.push('/')}
-          className="text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-200 flex items-center gap-1 cursor-pointer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--font-label)',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0',
+            transition: 'color 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
         >
-          &larr; Back
+          ← BACK
         </button>
       </div>
 
       {/* Hero section overall ATS score - Full width, no box container */}
-      <div ref={heroRef} className="opacity-0 flex flex-col md:flex-row items-center gap-8 w-full py-2">
+      <div 
+        ref={heroRef} 
+        className="opacity-0 flex flex-col md:flex-row md:items-center gap-[24px] md:gap-[48px] w-full"
+        style={{ paddingBottom: '40px', borderBottom: '1px solid var(--border-subtle)' }}
+      >
         {/* visual circular progress ring (uses new CircularScore component) */}
-        <div className="shrink-0">
+        <div style={{ flexShrink: 0 }}>
           <CircularScore score={review.overallScore} size={150} />
         </div>
 
@@ -220,8 +257,17 @@ function ReviewPageContent() {
 
       {/* 5 feedback section grid layout - 5-column grid on desktop */}
       <div ref={cardsRef} className="opacity-0 space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] font-display flex items-center gap-2">
-          <span className="w-1 h-3.5 bg-[var(--accent)] rounded-full" />
+        <h3 style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          fontSize: 'var(--font-label)',
+          fontFamily: 'var(--font-mono)',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+        }}>
+          <span style={{ width: '2px', height: '14px', background: 'var(--accent)', borderRadius: '2px', flexShrink: 0 }} />
           Section Breakdown
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -237,51 +283,131 @@ function ReviewPageContent() {
         </div>
       </div>
 
-      {/* matching keywords component check */}
-      <div ref={keywordsRef} className="opacity-0">
-        <KeywordChecker keywords={review.keywords} />
-      </div>
+      {/* Two-column grid alignment fix */}
+      <div 
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
+          gap: '40px',
+          alignItems: 'start',
+        }}
+      >
+        {/* matching keywords component check */}
+        <div ref={keywordsRef} className="opacity-0">
+          <KeywordChecker keywords={review.keywords} />
+        </div>
 
-      {/* critical top issues listings segment */}
-      <div ref={issuesRef} className="opacity-0 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-4 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
-        <h3 className="text-lg font-bold text-[var(--text-primary)] font-display flex items-center gap-2">
-          <span className="w-1 h-4 bg-[var(--danger)] rounded-full animate-pulse" />
-          Top Critical Issues
-        </h3>
-        <ul className="space-y-3.5 pt-2">
-          {review.topIssues.map((issue, idx) => (
-            <li key={issue} className="flex items-start gap-3.5 text-[var(--text-secondary)] text-sm leading-relaxed">
-              <span className="flex items-center justify-center w-5.5 h-5.5 rounded bg-[rgba(244,63,94,0.08)] border border-[rgba(244,63,94,0.2)] text-[var(--danger)] font-bold font-mono text-xs flex-shrink-0">
-                {idx + 1}
-              </span>
-              <p className="mt-0.5">{issue}</p>
-            </li>
-          ))}
-        </ul>
+        {/* critical top issues listings segment */}
+        <div ref={issuesRef} className="opacity-0 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-4 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+          <h3 style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: 'var(--font-label)',
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+          }}>
+            <span style={{ width: '2px', height: '14px', background: 'var(--danger)', borderRadius: '2px', flexShrink: 0 }} />
+            Top Critical Issues
+          </h3>
+          <ul className="space-y-3.5 pt-2">
+            {review.topIssues.map((issue, idx) => (
+              <li key={issue} className="flex items-start gap-3.5 text-[var(--text-secondary)] text-sm leading-relaxed">
+                <span className="flex items-center justify-center w-5.5 h-5.5 rounded bg-[rgba(244,63,94,0.08)] border border-[rgba(244,63,94,0.2)] text-[var(--danger)] font-bold font-mono text-xs flex-shrink-0">
+                  {idx + 1}
+                </span>
+                <p className="mt-0.5">{issue}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* review reset trigger action with clipboard share */}
-      <div ref={actionRef} className="opacity-0 flex flex-col sm:flex-row justify-center items-center gap-4 pt-6 relative no-print">
+      <div 
+        ref={actionRef} 
+        className="opacity-0 no-print"
+        style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', paddingTop: '24px', position: 'relative' }}
+      >
         <button
           onClick={() => router.push('/')}
-          className="magnetic-btn-analyze w-full sm:w-auto px-8 py-3.5 bg-[var(--accent)] hover:brightness-110 active:scale-98 transition-all font-display font-bold text-[14px] uppercase tracking-[0.05em] rounded-[4px] text-white cursor-pointer shadow-[0_4px_20px_var(--accent-glow)]"
+          className="magnetic-btn-analyze"
+          style={{
+            padding: '12px 24px',
+            background: 'var(--accent)',
+            border: 'none',
+            borderRadius: '6px',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'var(--font-sm)',
+            fontWeight: 700,
+            color: 'var(--bg-primary)',
+            cursor: 'pointer',
+            transition: 'box-shadow 0.2s',
+          }}
+          onMouseEnter={e => gsap.to(e.currentTarget, { boxShadow: '0 0 16px var(--accent-glow)', scale: 1.015, duration: 0.2 })}
+          onMouseLeave={e => gsap.to(e.currentTarget, { boxShadow: 'none', scale: 1, duration: 0.2 })}
         >
-          Review another resume &rarr;
+          Review another resume →
         </button>
+        
         <button
           onClick={handleShare}
-          className="w-full sm:w-auto px-8 py-3.5 border border-[var(--border-subtle)] hover:border-white/40 bg-transparent active:scale-98 transition-all font-display font-bold text-[14px] uppercase tracking-[0.05em] rounded-[4px] text-white cursor-pointer"
+          style={{
+            padding: '12px 24px',
+            background: 'transparent',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '6px',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'var(--font-sm)',
+            fontWeight: 700,
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            transition: 'border-color 0.2s, color 0.2s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'var(--accent)';
+            e.currentTarget.style.color = 'var(--text-primary)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            e.currentTarget.style.color = 'var(--text-secondary)';
+          }}
         >
           Share Results
         </button>
+
         <button
           onClick={handleDownloadPdf}
           disabled={isGeneratingPdf}
-          className="w-full sm:w-auto px-8 py-3.5 border border-[var(--accent-border)] hover:bg-[var(--accent-dim)] bg-transparent active:scale-98 transition-all font-display font-bold text-[14px] uppercase tracking-[0.05em] rounded-[4px] text-white cursor-pointer flex items-center justify-center gap-2"
+          style={{
+            padding: '12px 24px',
+            background: 'transparent',
+            border: '1px solid var(--accent-border)',
+            borderRadius: '6px',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'var(--font-sm)',
+            fontWeight: 700,
+            color: 'var(--accent)',
+            cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'background-color 0.2s',
+          }}
+          onMouseEnter={e => {
+            if (!isGeneratingPdf) {
+              e.currentTarget.style.backgroundColor = 'var(--accent-dim)';
+            }
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           {isGeneratingPdf ? (
             <>
-              <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <span className="spinner" />
               <span>Generating...</span>
             </>
           ) : (

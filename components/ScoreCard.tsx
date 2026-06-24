@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { gsap } from '@/lib/gsap';
 
 export interface ScoreCardProps {
@@ -21,20 +21,20 @@ export default function ScoreCard({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Badge background, border and text style mapping based on score
+  // Score badge ke exact colors (Mohed design token mapping)
   const getBadgeStyle = (val: number) => {
     if (val >= 8) {
-      return 'text-[var(--success)] bg-[rgba(16,185,129,0.06)] border-[rgba(16,185,129,0.2)]';
+      return { color: '#93B99E', borderColor: 'rgba(147,185,158,0.2)' }; // sage green
     }
     if (val >= 5) {
-      return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+      return { color: '#FFB800', borderColor: 'rgba(255,184,0,0.2)' }; // gold
     }
-    return 'text-[var(--danger)] bg-[rgba(244,63,94,0.05)] border-[rgba(244,63,94,0.2)]';
+    return { color: '#DA3036', borderColor: 'rgba(218,48,54,0.2)' }; // red
   };
 
   const getProgressColor = (val: number) => {
     if (val >= 8) return 'bg-[var(--success)]';
-    if (val >= 5) return 'bg-amber-400';
+    if (val >= 5) return 'bg-[var(--warning)]';
     return 'bg-[var(--danger)]';
   };
 
@@ -45,26 +45,59 @@ export default function ScoreCard({
   return (
     <div
       data-card
-      className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl flex flex-col hover:border-[var(--accent)]/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.02)] transition-all duration-300 cursor-pointer overflow-hidden h-fit"
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: '14px',
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: 'pointer',
+        overflow: 'hidden',
+        height: 'fit-content',
+        transition: 'border-color 0.25s var(--ease-expo)',
+      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-hover)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
       onClick={toggleOpen}
     >
-      {/* Header section name, progress and score */}
-      <div className="p-5 flex flex-col gap-3.5">
-        <div className="flex items-center justify-between gap-3">
-          <h4 className="text-[var(--text-primary)] font-bold text-sm sm:text-base font-display tracking-tight truncate">
+      {/* Card Header area */}
+      <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'between', gap: '12px' }}>
+          <h4 style={{ 
+            color: 'var(--text-primary)', 
+            fontWeight: 700, 
+            fontSize: '14px', 
+            fontFamily: 'var(--font-display)', 
+            letterSpacing: '-0.01em',
+            margin: 0,
+            flexGrow: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
             {title}
           </h4>
+          
+          {/* Badge: border + color, background removed */}
           <span
-            className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold border font-mono shrink-0 ${getBadgeStyle(
-              score
-            )}`}
+            style={{
+              padding: '2px 8px',
+              borderRadius: '999px',
+              fontSize: '11px',
+              fontWeight: 700,
+              border: '1px solid',
+              fontFamily: 'var(--font-mono)',
+              flexShrink: 0,
+              background: 'transparent',
+              ...getBadgeStyle(score),
+            }}
           >
             {score}/10
           </span>
         </div>
 
-        {/* progress bar */}
-        <div className="h-[2px] w-full bg-[var(--bg-primary)] rounded-full overflow-hidden border border-[var(--border-subtle)]">
+        {/* Thinner progress bar */}
+        <div style={{ height: '1.5px', width: '100%', background: 'rgba(255,255,255,0.04)', borderRadius: '999px', overflow: 'hidden' }}>
           <div
             className={`h-full rounded-full transition-all duration-700 ease-out ${getProgressColor(
               score
@@ -73,8 +106,8 @@ export default function ScoreCard({
           />
         </div>
 
-        {/* Collapsible toggle info line */}
-        <div className="flex items-center justify-between text-[11px] text-[var(--text-secondary)] font-medium pt-0.5">
+        {/* Issues vs fixes summary count */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
           <span>
             {issues.length} {issues.length === 1 ? 'issue' : 'issues'} &bull;{' '}
             {suggestions.length} {suggestions.length === 1 ? 'fix' : 'fixes'}
@@ -88,37 +121,58 @@ export default function ScoreCard({
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+            style={{ transition: 'transform 0.3s' }}
+            className={isOpen ? 'rotate-180' : ''}
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </div>
       </div>
 
-      {/* Collapsible content with smooth CSS transition (max-height based) */}
+      {/* Collapsible detailed lists */}
       <div
         ref={contentRef}
-        className="transition-all duration-300 ease-[var(--ease-expo)] overflow-hidden border-t border-[var(--border-subtle)]"
         style={{
+          transition: 'all 0.3s var(--ease-expo)',
+          overflow: 'hidden',
+          borderTop: isOpen ? '1px solid var(--border-subtle)' : 'none',
           maxHeight: isOpen ? `${contentRef.current?.scrollHeight || 1000}px` : '0px',
           opacity: isOpen ? 1 : 0,
         }}
-        onClick={(e) => e.stopPropagation()} // prevent toggle when clicking content inside card
+        onClick={(e) => e.stopPropagation()} // Click wrap inner area me toggle avoid karega
       >
-        <div className="p-5 pt-4 flex flex-col gap-4 text-xs">
-          {/* Issues bullet list */}
+        <div style={{ padding: '20px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* Issues block - left border thin, background-tint removed */}
           {issues.length > 0 && (
-            <div className="space-y-2">
-              <h5 className="font-bold text-[var(--danger)] uppercase font-mono tracking-wider text-[10px]">
+            <div 
+              style={{
+                borderLeft: '1.5px solid var(--danger)',
+                paddingLeft: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <h5 style={{ fontWeight: 700, color: 'var(--danger)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.1em', margin: 0 }}>
                 Issues ({issues.length})
               </h5>
-              <ul className="space-y-2">
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px', listStyle: 'none', margin: 0, padding: 0 }}>
                 {issues.map((issue, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2 text-[var(--text-secondary)] leading-relaxed"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'start',
+                      gap: '8px',
+                      color: 'var(--text-secondary)',
+                      fontSize: '13px',
+                      lineHeight: '1.5',
+                      borderBottom: idx < issues.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                      paddingBottom: idx < issues.length - 1 ? '10px' : '0',
+                    }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] mt-1.5 shrink-0" />
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--danger)', marginTop: '7px', flexShrink: 0 }} />
                     <span>{issue}</span>
                   </li>
                 ))}
@@ -126,19 +180,35 @@ export default function ScoreCard({
             </div>
           )}
 
-          {/* Suggestions arrow list */}
+          {/* Suggestions block - left border thin, background-tint removed */}
           {suggestions.length > 0 && (
-            <div className="space-y-2">
-              <h5 className="font-bold text-[var(--accent)] uppercase font-mono tracking-wider text-[10px]">
+            <div 
+              style={{
+                borderLeft: '1.5px solid var(--accent)',
+                paddingLeft: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <h5 style={{ fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.1em', margin: 0 }}>
                 Suggestions ({suggestions.length})
               </h5>
-              <ul className="space-y-2">
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px', listStyle: 'none', margin: 0, padding: 0 }}>
                 {suggestions.map((suggestion, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2 text-[var(--text-secondary)] leading-relaxed"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'start',
+                      gap: '8px',
+                      color: 'var(--text-secondary)',
+                      fontSize: '13px',
+                      lineHeight: '1.5',
+                      borderBottom: idx < suggestions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                      paddingBottom: idx < suggestions.length - 1 ? '10px' : '0',
+                    }}
                   >
-                    {/* green arrow icon */}
                     <svg
                       width="10"
                       height="10"
@@ -148,7 +218,7 @@ export default function ScoreCard({
                       strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="mt-1 shrink-0"
+                      style={{ marginTop: '5px', flexShrink: 0 }}
                     >
                       <line x1="5" y1="12" x2="19" y2="12" />
                       <polyline points="12 5 19 12 12 19" />
