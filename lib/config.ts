@@ -8,13 +8,12 @@
 function validateConfig(): void {
   const isServer = typeof window === 'undefined';
   if (isServer) {
-    const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
-    const openaiKey = process.env.OPENAI_API_KEY || '';
+    const groqKey = process.env.GROQ_API_KEY || '';
     
-    // checks that either Anthropic or OpenAI API keys are present
-    if (!anthropicKey && !openaiKey) {
+    // checks that Groq API key is present
+    if (!groqKey) {
       throw new Error(
-        'MISSING ENV VAR: Either ANTHROPIC_API_KEY or OPENAI_API_KEY must be set in your .env.local file.'
+        'MISSING ENV VAR: GROQ_API_KEY must be set in your Vercel project environment variables.'
       );
     }
   }
@@ -30,11 +29,9 @@ export interface Config {
 
 export const CONFIG: Config = {
   get ANTHROPIC_API_KEY(): string {
-    validateConfig();
     return process.env.ANTHROPIC_API_KEY || '';
   },
   get OPENAI_API_KEY(): string {
-    validateConfig();
     return process.env.OPENAI_API_KEY || '';
   },
   get MAX_FILE_SIZE_MB(): number {
@@ -44,6 +41,7 @@ export const CONFIG: Config = {
     return process.env.NODE_ENV || 'development';
   },
   get GROQ_API_KEY(): string {
+    validateConfig();
     return process.env.GROQ_API_KEY || '';
   },
 };
