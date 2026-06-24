@@ -23,7 +23,7 @@
   --accent-border: rgba(98,182,203,0.20);
 
   /* Semantic — Mohed's exact colors */
-  --success: #93B99E;
+  --success: #4CAF6E;
   --danger:  #DA3036;
   --warning: #FFB800;
 
@@ -60,19 +60,60 @@
 
 /* LIGHT THEME overrides */
 [data-theme="light"] {
-  --bg-primary:   #F4F1EB;   /* Mohed's --paper color */
-  --bg-secondary: #EDE9E0;
-  --bg-card:      #E8E4DA;
-  --bg-hover:     #DDD8CE;
+  --bg-primary:    #F7F3EE;    /* warm newsprint */
+  --bg-secondary:  #EDE8E0;
+  --bg-card:       #FFFFFF;
+  --bg-hover:      #F0EBE3;
 
-  --border-subtle: rgba(27,32,40,0.07);
-  --border-hover:  rgba(27,32,40,0.14);
+  --border-subtle: rgba(30,20,10,0.08);
+  --border-hover:  rgba(30,20,10,0.16);
 
-  --text-primary:   #1B2028;   /* Mohed's --color-primary-text */
-  --text-secondary: rgba(27,32,40,0.56);
-  --text-muted:     rgba(27,32,40,0.32);
+  --text-primary:   #1A1208;   /* near-black warm */
+  --text-secondary: rgba(26,18,8,0.58);
+  --text-muted:     rgba(26,18,8,0.35);
 
-  --grid-line: rgba(27,32,40,0.05);
+  --grid-line: rgba(30,20,10,0.055);
+
+  /* accent stays dynamic via JS */
+}
+
+/* Light theme — editorial grid background */
+[data-theme="light"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  background-image:
+    /* Horizontal rules — like a ruled notepad */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 47px,
+      rgba(30,20,10,0.045) 47px,
+      rgba(30,20,10,0.045) 48px
+    ),
+    /* Vertical margin line — editorial column */
+    linear-gradient(
+      90deg,
+      transparent calc(var(--nav-side) - 1px),
+      rgba(218,48,54,0.18) calc(var(--nav-side) - 1px),
+      rgba(218,48,54,0.18) var(--nav-side),
+      transparent var(--nav-side)
+    );
+}
+
+/* Light theme — subtle dot grid overlay (secondary texture) */
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(30,20,10,0.06) 1px,
+      transparent 1px
+    );
+  background-size: 24px 24px;
+  background-position: 0 0;
 }
 
 /* ── Base Reset ─────────────────────────────── */
@@ -119,7 +160,7 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  opacity: 0.032;
+  opacity: 0.038;
   pointer-events: none;
   z-index: 99998;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");

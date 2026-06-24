@@ -24,18 +24,30 @@ export default function ScoreCard({
   // Score badge ke exact colors (Mohed design token mapping)
   const getBadgeStyle = (val: number) => {
     if (val >= 8) {
-      return { color: '#93B99E', borderColor: 'rgba(147,185,158,0.2)' }; // sage green
+      return { 
+        color: '#4CAF6E', 
+        backgroundColor: 'rgba(76,175,110,0.07)', 
+        borderColor: 'rgba(76,175,110,0.2)' 
+      };
     }
     if (val >= 5) {
-      return { color: '#FFB800', borderColor: 'rgba(255,184,0,0.2)' }; // gold
+      return { 
+        color: '#FFB800', 
+        backgroundColor: 'rgba(255,184,0,0.07)', 
+        borderColor: 'rgba(255,184,0,0.2)' 
+      };
     }
-    return { color: '#DA3036', borderColor: 'rgba(218,48,54,0.2)' }; // red
+    return { 
+      color: '#DA3036', 
+      backgroundColor: 'rgba(218,48,54,0.06)', 
+      borderColor: 'rgba(218,48,54,0.18)' 
+    };
   };
 
-  const getProgressColor = (val: number) => {
-    if (val >= 8) return 'bg-[var(--success)]';
-    if (val >= 5) return 'bg-[var(--warning)]';
-    return 'bg-[var(--danger)]';
+  const getProgressStyle = (val: number) => {
+    if (val >= 8) return { backgroundColor: '#4CAF6E' };
+    if (val >= 5) return { backgroundColor: '#FFB800' };
+    return { backgroundColor: '#DA3036' };
   };
 
   const toggleOpen = () => {
@@ -88,7 +100,6 @@ export default function ScoreCard({
               border: '1px solid',
               fontFamily: 'var(--font-mono)',
               flexShrink: 0,
-              background: 'transparent',
               ...getBadgeStyle(score),
             }}
           >
@@ -99,10 +110,8 @@ export default function ScoreCard({
         {/* Thinner progress bar */}
         <div style={{ height: '1.5px', width: '100%', background: 'rgba(255,255,255,0.04)', borderRadius: '999px', overflow: 'hidden' }}>
           <div
-            className={`h-full rounded-full transition-all duration-700 ease-out ${getProgressColor(
-              score
-            )}`}
-            style={{ width: `${score * 10}%` }}
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${score * 10}%`, ...getProgressStyle(score) }}
           />
         </div>
 

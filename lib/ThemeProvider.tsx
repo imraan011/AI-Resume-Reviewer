@@ -4,7 +4,7 @@ import { ACCENT_PALETTES, getSessionAccentIndex, applyAccentToDOM } from './acce
 
 type Theme = 'dark' | 'light';
 interface ThemeCtx { theme: Theme; toggle: () => void; accentName: string; }
-const Ctx = createContext<ThemeCtx>({ theme: 'dark', toggle: () => {}, accentName: 'teal' });
+const Ctx = createContext<ThemeCtx>({ theme: 'dark', toggle: () => {}, accentName: 'crimson' });
 export const useTheme = () => useContext(Ctx);
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -21,9 +21,8 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     const active = saved || 'dark';
     setTheme(active);
 
-    // Dono ko DOM par apply karein
     document.documentElement.setAttribute('data-theme', active);
-    applyAccentToDOM(ACCENT_PALETTES[idx], active);
+    applyAccentToDOM(ACCENT_PALETTES[idx]);
   }, []);
 
   const toggle = () => {
@@ -31,12 +30,13 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     setTheme(next);
     localStorage.setItem('theme', next);
     document.documentElement.setAttribute('data-theme', next);
-    applyAccentToDOM(ACCENT_PALETTES[accentIdx], next);
+    applyAccentToDOM(ACCENT_PALETTES[accentIdx]);
   };
 
   return (
-    <Ctx.Provider value={{ theme, toggle, accentName: ACCENT_PALETTES[accentIdx].name }}>
+    <Ctx.Provider value={{ theme, toggle, accentName: ACCENT_PALETTES[accentIdx]?.name || 'crimson' }}>
       {children}
     </Ctx.Provider>
   );
 }
+

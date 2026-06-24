@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { type ReviewResult } from '@/types';
-import ScoreCard from '@/components/ScoreCard';
+import FeedbackSection from '@/components/FeedbackSection';
 import KeywordChecker from '@/components/KeywordChecker';
 import CircularScore from '@/components/CircularScore';
 import SectionScoreBar from '@/components/SectionScoreBar';
@@ -186,6 +186,7 @@ function ReviewPageContent() {
     <main 
       ref={pageRef}
       style={{
+        position: 'relative',
         minHeight: '100vh',
         background: 'var(--bg-primary)',
         color: 'var(--text-primary)',
@@ -198,8 +199,29 @@ function ReviewPageContent() {
         gap: '48px',
       }}
     >
+      {/* Background elements */}
+      <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none' }}>
+        {/* Grid */}
+        <div className="grid-bg" style={{ position:'absolute', inset:0 }} />
+        {/* Radial glow — top right for review page (different from home) */}
+        <div style={{
+          position: 'absolute',
+          top: '-100px', right: '-100px',
+          width: '500px', height: '500px',
+          background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 65%)',
+        }} />
+        {/* Secondary glow — bottom left */}
+        <div style={{
+          position: 'absolute',
+          bottom: '-80px', left: '-80px',
+          width: '400px', height: '400px',
+          background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 65%)',
+          opacity: 0.5,
+        }} />
+      </div>
+
       {/* Back button segment - Minimal text style */}
-      <div ref={backBtnRef} className="opacity-0 flex justify-start items-center no-print">
+      <div ref={backBtnRef} className="opacity-0 flex justify-start items-center no-print" style={{ position: 'relative', zIndex: 1 }}>
         <button
           onClick={() => router.push('/')}
           style={{
@@ -228,7 +250,7 @@ function ReviewPageContent() {
       <div 
         ref={heroRef} 
         className="opacity-0 flex flex-col md:flex-row md:items-center gap-[24px] md:gap-[48px] w-full"
-        style={{ paddingBottom: '40px', borderBottom: '1px solid var(--border-subtle)' }}
+        style={{ paddingBottom: '40px', borderBottom: '1px solid var(--border-subtle)', position: 'relative', zIndex: 1 }}
       >
         {/* visual circular progress ring (uses new CircularScore component) */}
         <div style={{ flexShrink: 0 }}>
@@ -244,19 +266,21 @@ function ReviewPageContent() {
 
       {/* Job Description Match Analysis (only if jdMatch is provided) */}
       {review.jdMatch && (
-        <div ref={jdMatchRef} className="opacity-0 w-full">
+        <div ref={jdMatchRef} className="opacity-0 w-full" style={{ position: 'relative', zIndex: 1 }}>
           <JDMatchCard jdMatch={review.jdMatch} />
         </div>
       )}
 
       {/* Horizontal rule separator */}
-      <hr className="border-[var(--border-subtle)] my-2" />
+      <hr className="border-[var(--border-subtle)] my-2" style={{ position: 'relative', zIndex: 1 }} />
 
       {/* Quick horizontal bars visual summary */}
-      <SectionScoreBar sections={review.sections} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <SectionScoreBar sections={review.sections} />
+      </div>
 
       {/* 5 feedback section grid layout - 5-column grid on desktop */}
-      <div ref={cardsRef} className="opacity-0 space-y-4">
+      <div ref={cardsRef} className="opacity-0 space-y-4" style={{ position: 'relative', zIndex: 1 }}>
         <h3 style={{
           display: 'flex',
           alignItems: 'center',
@@ -272,7 +296,7 @@ function ReviewPageContent() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {review.sections.map((sec) => (
-            <ScoreCard
+            <FeedbackSection
               key={sec.title}
               title={sec.title}
               score={sec.score}
@@ -290,6 +314,8 @@ function ReviewPageContent() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
           gap: '40px',
           alignItems: 'start',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {/* matching keywords component check */}
@@ -329,7 +355,7 @@ function ReviewPageContent() {
       <div 
         ref={actionRef} 
         className="opacity-0 no-print"
-        style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', paddingTop: '24px', position: 'relative' }}
+        style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', paddingTop: '24px', position: 'relative', zIndex: 1 }}
       >
         <button
           onClick={() => router.push('/')}
