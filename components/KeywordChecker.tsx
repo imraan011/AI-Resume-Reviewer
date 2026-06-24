@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { type KeywordMatch } from '@/types';
 import { gsap } from '@/lib/gsap';
 
@@ -12,6 +13,14 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
   const missingKeywords = keywords.filter((kw) => !kw.found);
   const totalKeywords = keywords.length;
   const foundCount = foundKeywords.length;
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Pills hover enter event - GSAP scale-up triggers
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -41,7 +50,14 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
       </div>
 
       {/* Two columns layout: Found vs Missing */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div 
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: '40px',
+          alignItems: 'start',
+        }}
+      >
         {/* Found Keywords list */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--success)] font-mono flex items-center gap-1.5">

@@ -335,16 +335,21 @@ function ReviewPageContent() {
           onClick={() => router.push('/')}
           className="magnetic-btn-analyze"
           style={{
-            padding: '12px 24px',
+            height: '44px',
+            padding: '0 24px',
             background: 'var(--accent)',
             border: 'none',
-            borderRadius: '6px',
-            fontFamily: 'var(--font-display)',
+            borderRadius: '8px',
+            fontFamily: 'var(--font-mono)',
             fontSize: 'var(--font-sm)',
             fontWeight: 700,
             color: 'var(--bg-primary)',
+            letterSpacing: '0.06em',
             cursor: 'pointer',
-            transition: 'box-shadow 0.2s',
+            transition: 'box-shadow 0.2s, transform 0.2s',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           onMouseEnter={e => gsap.to(e.currentTarget, { boxShadow: '0 0 16px var(--accent-glow)', scale: 1.015, duration: 0.2 })}
           onMouseLeave={e => gsap.to(e.currentTarget, { boxShadow: 'none', scale: 1, duration: 0.2 })}
@@ -355,16 +360,21 @@ function ReviewPageContent() {
         <button
           onClick={handleShare}
           style={{
-            padding: '12px 24px',
+            height: '44px',
+            padding: '0 24px',
             background: 'transparent',
             border: '1px solid var(--border-subtle)',
-            borderRadius: '6px',
-            fontFamily: 'var(--font-display)',
+            borderRadius: '8px',
+            fontFamily: 'var(--font-mono)',
             fontSize: 'var(--font-sm)',
             fontWeight: 700,
             color: 'var(--text-secondary)',
+            letterSpacing: '0.06em',
             cursor: 'pointer',
             transition: 'border-color 0.2s, color 0.2s',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = 'var(--accent)';
@@ -382,27 +392,32 @@ function ReviewPageContent() {
           onClick={handleDownloadPdf}
           disabled={isGeneratingPdf}
           style={{
-            padding: '12px 24px',
+            height: '44px',
+            padding: '0 24px',
             background: 'transparent',
-            border: '1px solid var(--accent-border)',
-            borderRadius: '6px',
-            fontFamily: 'var(--font-display)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '8px',
+            fontFamily: 'var(--font-mono)',
             fontSize: 'var(--font-sm)',
             fontWeight: 700,
-            color: 'var(--accent)',
+            color: 'var(--text-secondary)',
+            letterSpacing: '0.06em',
             cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '8px',
-            transition: 'background-color 0.2s',
+            transition: 'border-color 0.2s, color 0.2s',
           }}
           onMouseEnter={e => {
             if (!isGeneratingPdf) {
-              e.currentTarget.style.backgroundColor = 'var(--accent-dim)';
+              e.currentTarget.style.borderColor = 'var(--accent)';
+              e.currentTarget.style.color = 'var(--text-primary)';
             }
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            e.currentTarget.style.color = 'var(--text-secondary)';
           }}
         >
           {isGeneratingPdf ? (

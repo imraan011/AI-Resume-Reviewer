@@ -48,8 +48,9 @@ export default function CircularScore({ score, size = 160 }: CircularScoreProps)
   const activeColor = getColor(score);
 
   // SVG dimensions
+  const fixedSize = 150;
   const strokeWidth = 10;
-  const halfSize = size / 2;
+  const halfSize = fixedSize / 2;
   const radius = halfSize - strokeWidth;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - currentScore / 100);
@@ -59,11 +60,11 @@ export default function CircularScore({ score, size = 160 }: CircularScoreProps)
       {/* SVG score circle wrapper */}
       <div 
         className="relative flex items-center justify-center rounded-full"
-        style={{ width: size, height: size }}
+        style={{ width: '150px', height: '150px', flexShrink: 0 }}
       >
         <svg 
-          width={size} 
-          height={size} 
+          width="150" 
+          height="150" 
           className="-rotate-90"
         >
           {/* Faint track background circle */}
@@ -97,7 +98,7 @@ export default function CircularScore({ score, size = 160 }: CircularScoreProps)
         <div className="absolute flex flex-col items-center justify-center">
           <span 
             className="text-4xl font-extrabold font-mono transition-colors duration-300"
-            style={{ color: 'var(--accent)' }}
+            style={{ color: 'var(--accent)', fontSize: '2.8rem' }}
           >
             {currentScore}
           </span>

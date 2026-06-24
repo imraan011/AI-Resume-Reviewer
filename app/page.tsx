@@ -152,13 +152,12 @@ export default function Home() {
         maxWidth: '580px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '32px',
         position: 'relative',
         zIndex: 1,
         textAlign: 'center',
       }}>
         {/* Category Label */}
-        <div ref={labelRef} style={{ opacity: 0 }}>
+        <div ref={labelRef} style={{ opacity: 0, marginBottom: '24px' }}>
           <span style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -187,6 +186,7 @@ export default function Home() {
           color: 'var(--text-primary)',
           lineHeight: 1.05,
           letterSpacing: '-0.03em',
+          marginBottom: '24px',
         }}>
           Resume that<br />gets you hired.
         </h1>
@@ -199,6 +199,7 @@ export default function Home() {
           lineHeight: 1.75,
           maxWidth: '440px',
           margin: '0 auto',
+          marginBottom: '20px',
         }}>
           Upload your PDF. Get instant ATS score, keyword gaps,
           and section-by-section feedback — powered by AI.
@@ -213,6 +214,7 @@ export default function Home() {
           background: 'rgba(255,255,255,0.012)',
           backdropFilter: 'blur(10px)',
           transition: 'border-color 0.3s var(--ease-expo)',
+          marginBottom: '24px',
         }}
         onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
         onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}

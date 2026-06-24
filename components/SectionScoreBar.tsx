@@ -43,15 +43,40 @@ export default function SectionScoreBar({ sections }: SectionScoreBarProps) {
         {sections.map((sec) => (
           <div 
             key={sec.title} 
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-6"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              width: '100%',
+            }}
           >
             {/* Category label on the left */}
-            <span className="text-xs font-bold text-[var(--text-primary)] font-display w-full sm:w-44 truncate">
+            <span 
+              className="truncate"
+              style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-display)',
+                minWidth: '180px',
+                flexShrink: 0,
+              }}
+            >
               {sec.title}
             </span>
 
             {/* Progress bar track in the middle */}
-            <div className="flex-1 h-2 bg-[var(--bg-primary)] rounded-full overflow-hidden border border-[var(--border-subtle)] p-[1px] relative">
+            <div 
+              style={{
+                flex: 1,
+                height: '8px',
+                background: 'var(--bg-primary)',
+                borderRadius: '999px',
+                overflow: 'hidden',
+                border: '1px solid var(--border-subtle)',
+                position: 'relative',
+              }}
+            >
               <div 
                 className={`h-full rounded-full transition-all duration-1000 ease-[var(--ease-expo)] ${getProgressColor(sec.score)}`}
                 style={{ width: mounted ? `${sec.score * 10}%` : '0%' }}
@@ -59,7 +84,20 @@ export default function SectionScoreBar({ sections }: SectionScoreBarProps) {
             </div>
 
             {/* Numeric badge value on the right */}
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border font-mono tracking-tight shrink-0 self-end sm:self-center text-center w-14 ${getBadgeStyle(sec.score)}`}>
+            <span 
+              className={getBadgeStyle(sec.score)}
+              style={{
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 700,
+                border: '1px solid',
+                fontFamily: 'var(--font-mono)',
+                minWidth: '60px',
+                textAlign: 'right',
+                flexShrink: 0,
+              }}
+            >
               {sec.score} / 10
             </span>
           </div>
