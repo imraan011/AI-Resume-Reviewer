@@ -21,9 +21,12 @@ A dark, premium web app that analyzes your resume and gives instant, structured 
 - **Cinematic Entrance Sequence**: Multilingual greetings rotate smoothly before loading a dedicated "AI Resume Reviewer" title intro screen.
 - **Transitional Parallax Reveal**: Title slides up and fades out in sync with the curtain reveal for a premium layout entrance.
 - **Dynamic Upload Zone**: Dash-border zone supporting drag & drop and browse options with state validation (PDF/DOCX, 5MB limits) and GSAP micro-animations.
+- **Job Description (JD) Tailoring Mode**: Toggle to paste a target job description. The AI tailors its entire analysis, overall quality evaluation, and keyword gaps directly to the JD.
+- **JD Match Hero Card**: Dynamic visual container displaying compatibility score (0-100%), match quality label badge, strategic alignment advice, and lists of matched/missing skills.
 - **ATS Score Visualizer**: Animated circular SVG score ring counting from `0` to the actual score dynamically on render.
-- **Score Breakdown Grid**: Section breakdown cards that collapse/expand for issues and suggestions with subtle hover-lift mechanics.
-- **Keyword Checklist**: Panel showing found vs missing keywords in the resume.
+- **Score Breakdown Grid**: Premium cards in a 5-column layout displaying issues and fixes with absolute-positioned popup tooltips on hover.
+- **Adaptive Keyword Checker**: Displays keywords expected vs. found, automatically flagging JD-derived skills with a specialized "JD" badge.
+- **Dynamic Home Stats**: Homepage stats block updates dynamically to prioritize JD Match Score metrics when JD mode is toggled active.
 - **Modular Refactoring**: Restructured in strict adherence to clean architecture principles (all files strictly modularized, under 110 lines).
 
 ---
@@ -58,31 +61,25 @@ ai-resume/
 ├── app/
 │   ├── globals.css              # Design tokens and global CSS
 │   ├── layout.tsx               # Entry layout setting up fonts & Lenis
-│   ├── page.tsx                 # Landing / Upload view controller (80 lines)
+│   ├── page.tsx                 # Landing / Upload view controller (with JD toggle mode)
 │   └── review/
-│       └── page.tsx             # Review feedback visual timeline coordinator (78 lines)
+│       └── page.tsx             # Review feedback page with JD matching cards
 ├── components/
-│   ├── GreetingIntro.tsx        # Multilingual entry curtain anims (96 lines)
-│   ├── HeroElements.tsx         # Radial background and stat pills
-│   ├── HeroHeadings.tsx         # Title text sub-components
-│   ├── ReviewBackButton.tsx     # Navigation back helper
-│   ├── ReviewCards.tsx          # Collapsible category section sheets
-│   ├── ReviewKeywordsPanel.tsx  # Checklist checks for industry skills
-│   ├── ReviewScoreHero.tsx      # SVG ATS score ring controller
-│   ├── ScoreRing.tsx            # SVG path geometry properties
-│   ├── SmoothLayout.tsx         # Lenis smooth-scrolling connector
-│   ├── UploadZone.tsx           # Drag/drop event and loading state core
-│   ├── UploadZoneButton.tsx     # Animated CTA upload submission buttons
-│   ├── UploadZoneIcons.tsx      # SVG file/folder/loading dots assets
-│   └── UploadZoneViews.tsx      # Sub-views for idle, upload, selected states
-└── lib/
-    ├── animations.ts            # Entrypoint re-exports for animation helpers
-    ├── animations/
-    │   ├── effects.ts           # Interactive card lifts & counter counters
-    │   └── reveals.ts           # Viewport ScrollTrigger dynamic transitions
-    ├── greetings.ts             # Static dictionary datasets for intro cycle
-    ├── gsap.ts                  # Centralized GSAP singleton registrations
-    └── types.ts                 # Shared strict TypeScript contracts
+│   ├── GreetingIntro.tsx        # Multilingual entry curtain anims
+│   ├── SectionScoreBar.tsx      # Multi-segmented progress bar
+│   ├── KeywordChecker.tsx       # Found vs missing keyword tag grids
+│   ├── FeedbackSection.tsx      # Editorial rating cards with popup suggestions
+│   ├── CircularScore.tsx        # Animated SVG ATS progress ring
+│   ├── CustomCursor.tsx         # Responsive dual-spring lag cursor
+│   └── JDMatchCard.tsx          # Job description matching components
+├── lib/
+│   ├── accent.ts                # Client side accent style management
+│   ├── ThemeProvider.tsx        # Toggle theme provider interface
+│   ├── aiClient.ts              # Groq SDK LLM completion service (Dual mode support)
+│   ├── gsap.ts                  # Centralized GSAP singleton registrations
+│   └── types.ts                 # Shared strict TypeScript contracts
+└── types/
+    └── index.ts                 # Global synchronized types definitions
 ```
 
 ---
@@ -92,12 +89,12 @@ ai-resume/
 We use a curated design system based on native CSS variables (in [globals.css](file:///c:/Users/ishtikhar/Desktop/portfolio/AI-Resume/ai-resume/app/globals.css)):
 
 ```css
---bg-primary:   #0a0a0a;   /* Deep matte dark */
+--bg-primary:   #0c0c0c;   /* Deep matte dark */
 --bg-secondary: #111111;   /* Offset dark background */
 --bg-card:      #141414;   /* Surface container background */
---accent:       #e8ff47;   /* Electric lime — signature highlight */
---danger:       #ff4444;   /* Critical status warnings */
---success:      #44ff88;   /* Validated check indicators */
+--accent:       #62b6cb;   /* Electric accent — signature highlight */
+--danger:       #da3036;   /* Critical status warnings */
+--success:      #4caf6e;   /* Validated check indicators */
 
 --font-display: Syne;      /* Strong geometric headers */
 --font-body:    Inter;     /* Clean reading body text */

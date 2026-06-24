@@ -117,43 +117,45 @@
 }
 
 /* ── Base Reset ─────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  scroll-behavior: auto; /* Lenis handles this */
-  color-scheme: dark;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent) var(--bg-secondary);
+  html {
+    scroll-behavior: auto; /* Lenis handles this */
+    color-scheme: dark;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) var(--bg-secondary);
+  }
+  [data-theme="light"] { color-scheme: light; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+  ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; }
+
+  ::selection { background: var(--accent); color: var(--bg-primary); }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--font-base);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background 0.4s var(--ease-expo), color 0.3s var(--ease-expo);
+  }
+
+  h1,h2,h3,h4,h5,h6 {
+    font-family: var(--font-display);
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  p { color: var(--text-secondary); }
+  a { color: inherit; text-decoration: none; }
+  ul, ol { list-style: none; }
 }
-[data-theme="light"] { color-scheme: light; }
-
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--bg-secondary); }
-::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; }
-
-::selection { background: var(--accent); color: var(--bg-primary); }
-
-body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: var(--font-base);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  transition: background 0.4s var(--ease-expo), color 0.3s var(--ease-expo);
-}
-
-h1,h2,h3,h4,h5,h6 {
-  font-family: var(--font-display);
-  color: var(--text-primary);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-p { color: var(--text-secondary); }
-a { color: inherit; text-decoration: none; }
-ul, ol { list-style: none; }
 
 /* Noise texture — Mohed level depth */
 body::before {

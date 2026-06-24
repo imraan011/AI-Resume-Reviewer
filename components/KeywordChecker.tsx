@@ -101,17 +101,15 @@ export default function KeywordChecker({ keywords, hasJD = false }: KeywordCheck
                   <span style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: '8px',
-                    letterSpacing: '0.08em',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
                     color: 'var(--accent)',
                     background: 'var(--accent-dim)',
                     borderRadius: '3px',
                     padding: '1px 4px',
-                    marginLeft: '2px',
+                    marginLeft: '3px',
                     verticalAlign: 'middle',
-                    textTransform: 'uppercase',
-                  }}>
-                    JD
-                  </span>
+                  }}>JD</span>
                 )}
                 {kw.importance === 'high' && (
                   <svg
@@ -164,17 +162,15 @@ export default function KeywordChecker({ keywords, hasJD = false }: KeywordCheck
                   <span style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: '8px',
-                    letterSpacing: '0.08em',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
                     color: 'var(--accent)',
                     background: 'var(--accent-dim)',
                     borderRadius: '3px',
                     padding: '1px 4px',
-                    marginLeft: '2px',
+                    marginLeft: '3px',
                     verticalAlign: 'middle',
-                    textTransform: 'uppercase',
-                  }}>
-                    JD
-                  </span>
+                  }}>JD</span>
                 )}
                 {kw.importance === 'high' && (
                   <svg

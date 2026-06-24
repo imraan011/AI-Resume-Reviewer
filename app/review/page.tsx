@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation';
 import { type ReviewResult } from '@/types';
 import FeedbackSection from '@/components/FeedbackSection';
 import KeywordChecker from '@/components/KeywordChecker';
-import CircularScore from '@/components/CircularScore';
-import SectionScoreBar from '@/components/SectionScoreBar';
-import JDMatchCard from '@/components/JDMatchCard';
 import ReviewSkeleton from '@/components/ReviewSkeleton';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { gsap } from '@/lib/gsap';
@@ -16,13 +13,25 @@ import { cardHoverEffect } from '@/lib/animations';
 
 function ReviewPageContent() {
   const router = useRouter();
-  const storedJD = typeof window !== 'undefined' ? sessionStorage.getItem('jobDescription') || '' : '';
-  const hasJD = Boolean(storedJD && storedJD.trim().length > 50);
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('Link copied!');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [hasJD, setHasJD] = useState(false);
+
+  // animation elements references
+  const pageRef = useRef<HTMLDivElement>(null);
+  const backBtnRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<SVGCircleElement>(null);
+  const scoreNumRef = useRef<HTMLSpanElement>(null);
+  const jdMatchRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const keywordsRef = useRef<HTMLDivElement>(null);
+  const issuesRef = useRef<HTMLDivElement>(null);
+  const actionRef = useRef<HTMLDivElement>(null);
 
   const handleDownloadPdf = () => {
     setIsGeneratingPdf(true);
@@ -40,16 +49,6 @@ function ReviewPageContent() {
     }, 300);
   };
 
-  // animation elements references
-  const pageRef = useRef<HTMLDivElement>(null);
-  const backBtnRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const jdMatchRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
-  const keywordsRef = useRef<HTMLDivElement>(null);
-  const issuesRef = useRef<HTMLDivElement>(null);
-  const actionRef = useRef<HTMLDivElement>(null);
-
   // local session cache and URL param check
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -61,8 +60,9 @@ function ReviewPageContent() {
         const decoded = window.atob(urlData).split('').map((c) => {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join('');
-        const parsed = JSON.parse(decodeURIComponent(decoded));
+        const parsed = JSON.parse(decodeURIComponent(decoded)) as ReviewResult;
         setReview(parsed);
+        setHasJD(parsed.hasJD === true);
         setLoading(false);
         return;
       } catch (err) {
@@ -76,7 +76,9 @@ function ReviewPageContent() {
       return;
     }
     try {
-      setReview(JSON.parse(data));
+      const parsed = JSON.parse(data) as ReviewResult;
+      setReview(parsed);
+      setHasJD(parsed.hasJD === true);
     } catch {
       router.replace('/');
     } finally {
@@ -90,6 +92,8 @@ function ReviewPageContent() {
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       gsap.set([pageRef.current, backBtnRef.current, heroRef.current, cardsRef.current, keywordsRef.current, issuesRef.current, actionRef.current], { opacity: 1 });
+      if (jdMatchRef.current) gsap.set(jdMatchRef.current, { opacity: 1 });
+      if (detailsRef.current) gsap.set(detailsRef.current, { opacity: 1 });
       const cards = document.querySelectorAll('[data-card]');
       gsap.set(cards, { opacity: 1, y: 0 });
       return;
@@ -100,7 +104,8 @@ function ReviewPageContent() {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
     // Page fade reveal
-    tl.to(document.body, { opacity: 1, duration: 0.35, ease: 'power2.out' });
+    tl.to(document.body, { opacity: 1, duration: 0.35, ease: 'power2.out' })
+      .to(pageRef.current, { opacity: 1, duration: 0.35, ease: 'power2.out' }, 0);
     
     // Back button reveal
     tl.fromTo(backBtnRef.current, { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.45 }, '-=0.25');
@@ -108,13 +113,43 @@ function ReviewPageContent() {
     // Hero assessment circular meter and text reveal
     tl.fromTo(heroRef.current, { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.65 }, '-=0.25');
 
-    // JD Match details panel if present
-    if (jdMatchRef.current && review.jdMatch) {
-      tl.fromTo(jdMatchRef.current,
-        { opacity:0, y:24 },
-        { opacity:1, y:0, duration:0.7, ease:'expo.out' },
+    // Overall ATS Score circle and text count animations
+    if (ringRef.current && scoreNumRef.current) {
+      const scoreVal = review.overallScore;
+      const targetOffset = 263.89 - (263.89 * scoreVal) / 100;
+      
+      tl.fromTo(ringRef.current,
+        { strokeDashoffset: 263.89 },
+        { strokeDashoffset: targetOffset, duration: 1.2, ease: 'power2.out' },
         '-=0.4'
       );
+      
+      const countObj = { val: 0 };
+      tl.to(countObj, {
+        val: scoreVal,
+        duration: 1.2,
+        ease: 'power2.out',
+        onUpdate: () => {
+          if (scoreNumRef.current) {
+            scoreNumRef.current.innerText = Math.round(countObj.val).toString();
+          }
+        }
+      }, '<');
+    }
+
+    // JD Match card reveal
+    if (jdMatchRef.current && review.jdMatch) {
+      tl.fromTo(
+        jdMatchRef.current,
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' },
+        '-=0.4'
+      );
+    }
+
+    // Detailed breakdown column reveal
+    if (detailsRef.current) {
+      tl.fromTo(detailsRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.55 }, '-=0.4');
     }
 
     // Score cards stagger reveal
@@ -189,489 +224,454 @@ function ReviewPageContent() {
   if (!review) return null;
 
   return (
-    <main 
+    <main
       ref={pageRef}
-      style={{
-        position: 'relative',
-        minHeight: '100vh',
-        width: '100%',
-        background: 'var(--bg-primary)',
-        color: 'var(--text-primary)',
-        overflow: 'hidden',
-      }}
+      className="opacity-0 min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] w-full max-w-6xl mx-auto px-4 sm:px-8 py-12 flex flex-col gap-8"
+      style={{ position: 'relative', marginLeft: 'auto', marginRight: 'auto' }}
     >
-      {/* Background elements */}
+      {/* ── Fixed background glows ── */}
       <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none' }}>
-        {/* Grid */}
-        <div className="grid-bg" style={{ position:'absolute', inset:0 }} />
-        {/* Radial glow — top right for review page (different from home) */}
+        <div className="grid-bg" style={{ position:'absolute', inset:0, opacity:0.6 }} />
         <div style={{
-          position: 'absolute',
-          top: '-100px', right: '-100px',
-          width: '500px', height: '500px',
-          background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 65%)',
+          position:'absolute', top:'-100px', right:'-80px',
+          width:'500px', height:'500px',
+          background:'radial-gradient(circle, var(--accent-glow) 0%, transparent 65%)',
         }} />
-        {/* Secondary glow — bottom left */}
         <div style={{
-          position: 'absolute',
-          bottom: '-80px', left: '-80px',
-          width: '400px', height: '400px',
-          background: 'radial-gradient(circle, var(--accent-glow) 0%, transparent 65%)',
-          opacity: 0.5,
+          position:'absolute', bottom:'-80px', left:'-60px',
+          width:'380px', height:'380px',
+          background:'radial-gradient(circle, var(--accent-glow) 0%, transparent 65%)',
+          opacity:0.4,
         }} />
       </div>
 
-      {/* Center content container layout */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          width: '100%',
-          maxWidth: '1120px',
-          margin: '0 auto',
-          padding: 'clamp(24px, 5vw, 64px) var(--nav-side)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '36px',
-        }}
-      >
-
-      {/* Back button segment - Minimal text style */}
-      <div ref={backBtnRef} className="opacity-0 flex justify-start items-center no-print" style={{ position: 'relative', zIndex: 1 }}>
-        <button
-          onClick={() => router.push('/')}
-          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors font-mono text-[11px] uppercase tracking-[0.12em] flex items-center gap-2 cursor-pointer bg-transparent border-none p-0"
-        >
-          ← BACK
-        </button>
-      </div>
-
-      {/* Hero section overall ATS score - Full width, no box container */}
-      <div 
-        ref={heroRef} 
-        className="opacity-0 flex flex-col md:flex-row md:items-center gap-8 w-full pb-10 border-b border-[var(--border-subtle)]"
-        style={{ position: 'relative', zIndex: 1 }}
-      >
-        {/* visual circular progress ring (uses new CircularScore component) */}
-        <div style={{ flexShrink: 0 }}>
-          <CircularScore score={review.overallScore} size={160} />
-        </div>
-
-        {/* overall summary analysis context */}
-        <div className="space-y-3 text-center md:text-left flex-1">
-          <h2 className="text-3xl font-extrabold font-display text-white tracking-tight leading-tight">Overall Assessment</h2>
-          <p className="text-[var(--text-secondary)] text-base leading-relaxed">{review.summary}</p>
-        </div>
-      </div>
-
-      {/* Job Description Match Analysis (only if jdMatch is provided) */}
-      {review.jdMatch && (
-        <div ref={jdMatchRef} style={{
-          opacity: 0,
-          padding: '24px 28px',
-          border: '1px solid var(--accent-border)',
-          borderRadius: '14px',
-          background: 'var(--accent-dim)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '20px',
-          position: 'relative',
-          zIndex: 1,
-        }}>
-          {/* Header row */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:'12px' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-              <span style={{
-                width: '3px', height: '18px',
-                background: 'var(--accent)',
-                borderRadius: '2px', flexShrink: 0,
-              }} />
-              <span style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'var(--font-label)',
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                color: 'var(--accent)',
-              }}>
-                JD Match Score
-              </span>
-            </div>
-
-            {/* Match label badge */}
-            <span style={{
+      {/* ── All content above bg ── */}
+      <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'36px' }}>
+        {/* ── 1. BACK BUTTON ── */}
+        <div ref={backBtnRef} className="opacity-0 flex justify-between items-center">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 cursor-pointer transition-colors"
+            style={{
+              background: 'none', border: 'none', padding: 0,
               fontFamily: 'var(--font-mono)',
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
+              fontSize: '11px',
+              letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color: review.jdMatch.score >= 80 ? 'var(--success)'
-                    : review.jdMatch.score >= 60 ? 'var(--warning)'
-                    : '#DA3036',
-              border: `1px solid ${
-                review.jdMatch.score >= 80 ? 'rgba(76,175,110,0.3)'
-                : review.jdMatch.score >= 60 ? 'rgba(255,184,0,0.3)'
-                : 'rgba(218,48,54,0.3)'
-              }`,
-              background: review.jdMatch.score >= 80 ? 'rgba(76,175,110,0.07)'
-                        : review.jdMatch.score >= 60 ? 'rgba(255,184,0,0.07)'
-                        : 'rgba(218,48,54,0.06)',
-              borderRadius: '999px',
-              padding: '3px 12px',
-            }}>
-              {review.jdMatch.label}
-            </span>
-          </div>
+              color: 'var(--text-muted)',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+          >
+            ← BACK
+          </button>
 
-          {/* Score + Progress bar */}
-          <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
-            <div style={{ display:'flex', alignItems:'baseline', gap:'6px' }}>
-              <span style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'clamp(36px, 6vw, 52px)',
-                fontWeight: 800,
-                color: 'var(--accent)',
-                lineHeight: 1,
-                letterSpacing: '-0.03em',
-              }}>
-                {review.jdMatch.score}
-              </span>
-              <span style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '16px',
-                color: 'var(--text-muted)',
-                fontWeight: 400,
-              }}>
-                /100
-              </span>
-            </div>
-
-            {/* Progress bar */}
-            <div style={{
-              height: '3px',
-              background: 'var(--border-subtle)',
-              borderRadius: '999px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${review.jdMatch.score}%`,
-                background: review.jdMatch.score >= 80 ? 'var(--success)'
-                          : review.jdMatch.score >= 60 ? 'var(--warning)'
-                          : '#DA3036',
-                borderRadius: '999px',
-                transition: 'width 1.2s cubic-bezier(0.16,1,0.3,1)',
-              }} />
-            </div>
-          </div>
-
-          {/* Recommendation */}
-          <p style={{
-            fontSize: '13px',
-            color: 'var(--text-secondary)',
-            lineHeight: 1.65,
-            fontStyle: 'italic',
-            margin: 0,
-            paddingTop: '4px',
-            borderTop: '1px solid var(--accent-border)',
+          {/* Mode badge — shows which mode was used */}
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10px',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: hasJD ? 'var(--accent)' : 'var(--text-muted)',
+            background: hasJD ? 'var(--accent-dim)' : 'transparent',
+            border: hasJD ? '1px solid var(--accent-border)' : '1px solid var(--border-subtle)',
+            borderRadius: '999px',
+            padding: '3px 12px',
           }}>
-            "{review.jdMatch.recommendation}"
-          </p>
-
-          {/* Two columns: matched + missing */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px',
-          }}>
-
-            {/* Matched Skills */}
-            <div>
-              <p style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--success)',
-                marginBottom: '10px',
-              }}>
-                ✓ Matched — {review.jdMatch.matchedSkills.length}
-              </p>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
-                {review.jdMatch.matchedSkills.map((skill, i) => (
-                  <span key={i} style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '11px',
-                    color: 'var(--success)',
-                    background: 'rgba(76,175,110,0.08)',
-                    border: '1px solid rgba(76,175,110,0.2)',
-                    borderRadius: '999px',
-                    padding: '3px 10px',
-                  }}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Missing Skills */}
-            <div>
-              <p style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: '#DA3036',
-                marginBottom: '10px',
-              }}>
-                ✗ Missing — {review.jdMatch.missingSkills.length}
-              </p>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
-                {review.jdMatch.missingSkills.map((skill, i) => (
-                  <span key={i} style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '11px',
-                    color: '#DA3036',
-                    background: 'rgba(218,48,54,0.06)',
-                    border: '1px solid rgba(218,48,54,0.18)',
-                    borderRadius: '999px',
-                    padding: '3px 10px',
-                  }}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* Horizontal rule separator */}
-      <hr className="border-[var(--border-subtle)] my-2" style={{ position: 'relative', zIndex: 1 }} />
-
-      {/* Quick horizontal bars visual summary */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <SectionScoreBar sections={review.sections} />
-      </div>
-
-      {/* 5 feedback section grid layout - 5-column grid on desktop */}
-      <div ref={cardsRef} className="opacity-0 space-y-4" style={{ position: 'relative', zIndex: 1 }}>
-        <h3 style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontSize: 'var(--font-label)',
-          fontFamily: 'var(--font-mono)',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          color: 'var(--text-muted)',
-        }}>
-          <span style={{ width: '2px', height: '14px', background: 'var(--accent)', borderRadius: '2px', flexShrink: 0 }} />
-          Section Breakdown
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {review.sections.map((sec) => (
-            <FeedbackSection
-              key={sec.title}
-              title={sec.title}
-              score={sec.score}
-              issues={sec.issues}
-              suggestions={sec.suggestions}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Two-column grid alignment fix */}
-      <div 
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
-          gap: '40px',
-          alignItems: 'start',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        {/* matching keywords component check */}
-        <div ref={keywordsRef} className="opacity-0">
-          <KeywordChecker keywords={review.keywords} hasJD={review.hasJD} />
+            {hasJD ? '⬡ JD-Tailored Analysis' : 'General Analysis'}
+          </span>
         </div>
 
-        {/* critical top issues listings segment */}
-        <div 
-          ref={issuesRef} 
-          className="opacity-0 shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
+        {/* ── 2. HERO — Score Ring + Overall Assessment ── */}
+        <div
+          ref={heroRef}
+          className="opacity-0"
           style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '24px 28px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px',
+            gap: '24px',
+            paddingBottom: '32px',
+            borderBottom: '1px solid var(--border-subtle)',
           }}
         >
-          <h3 style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            fontSize: 'var(--font-label)',
-            fontFamily: 'var(--font-mono)',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-          }}>
-            <span style={{ width: '2px', height: '14px', background: 'var(--danger)', borderRadius: '2px', flexShrink: 0 }} />
-            Top Critical Issues
-          </h3>
-          <ul style={{ display: 'flex', flexDirection: 'column', gap: '16px', listStyle: 'none', margin: 0, padding: 0 }}>
-            {review.topIssues.map((issue, idx) => (
-              <li key={issue} style={{ display: 'flex', alignItems: 'start', gap: '14px' }}>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '4px',
-                  background: '#FF5252',
-                  color: '#FFFFFF',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  flexShrink: 0,
-                  marginTop: '2px',
-                }}>
-                  {idx + 1}
-                </span>
-                <p style={{
-                  fontSize: '13px',
-                  color: 'var(--text-secondary)',
-                  lineHeight: 1.65,
-                  margin: 0,
-                  flex: 1,
-                }}>
-                  {issue}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:'24px' }}>
+            {/* @media md: flex-row */}
+            <style>{`@media(min-width:768px){.hero-inner{flex-direction:row!important;align-items:center!important}}`}</style>
+            <div className="hero-inner" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'28px', width:'100%' }}>
+
+              {/* Score Ring */}
+              <div style={{ position:'relative', width:'150px', height:'150px', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg style={{ width:'100%', height:'100%', transform:'rotate(-90deg)', filter:'drop-shadow(0 0 16px var(--accent-glow))' }} viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.04)" strokeWidth="7" fill="transparent" />
+                  <circle
+                    ref={ringRef}
+                    cx="50" cy="50" r="42"
+                    stroke="var(--accent)"
+                    strokeWidth="7"
+                    fill="transparent"
+                    strokeDasharray={263.89}
+                    strokeDashoffset={263.89}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div style={{ position:'absolute', display:'flex', flexDirection:'column', alignItems:'center' }}>
+                  <span ref={scoreNumRef} style={{ fontFamily:'var(--font-mono)', fontSize:'2.4rem', fontWeight:800, color:'var(--accent)', lineHeight:1, letterSpacing:'-0.03em' }}>0</span>
+                  <span style={{ fontFamily:'var(--font-mono)', fontSize:'9px', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--text-muted)', marginTop:'4px' }}>ATS Score</span>
+                </div>
+              </div>
+
+              {/* Assessment text */}
+              <div style={{ flex:1, textAlign:'left' }}>
+                <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(22px,4vw,32px)', fontWeight:800, color:'var(--text-primary)', letterSpacing:'-0.02em', lineHeight:1.1, marginBottom:'12px' }}>
+                  Overall Assessment
+                </h2>
+                <p style={{ fontSize:'15px', color:'var(--text-secondary)', lineHeight:1.7, maxWidth:'560px' }}>
+                  {review.summary}
                 </p>
-              </li>
-            ))}
-          </ul>
+              </div>
+
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* review reset trigger action with clipboard share */}
-      <div 
-        ref={actionRef} 
-        className="opacity-0 flex items-center justify-center gap-6 pt-12 pb-6 flex-wrap no-print"
-        style={{ position:'relative', zIndex:1 }}
-      >
-        <button
-          onClick={() => router.push('/')}
-          className="premium-btn magnetic-btn-analyze"
-          style={{
-            height: '46px',
-            padding: '0 28px',
-            background: 'var(--accent)',
-            color: 'var(--bg-primary)',
-            border: '1px solid var(--accent)',
-            borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '12px',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            transition: 'all 0.25s var(--ease-expo)',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = '0 0 20px var(--accent-glow)';
-            e.currentTarget.style.transform = 'translateY(-1.5px)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          Review another &rarr;
-        </button>
+        {/* ── 3. JD MATCH CARD ── */}
+        {hasJD && review.jdMatch && (
+          <div
+            ref={jdMatchRef}
+            style={{
+              opacity: 0,
+              border: '1px solid var(--accent-border)',
+              borderRadius: '16px',
+              background: 'var(--accent-dim)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Card header */}
+            <div style={{
+              padding: '16px 24px',
+              borderBottom: '1px solid var(--accent-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                <span style={{ width:'3px', height:'18px', background:'var(--accent)', borderRadius:'2px', flexShrink:0 }} />
+                <span style={{ fontFamily:'var(--font-mono)', fontSize:'11px', letterSpacing:'0.16em', textTransform:'uppercase', color:'var(--accent)', fontWeight:700 }}>
+                  Job Description Match
+                </span>
+              </div>
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                padding: '4px 14px',
+                borderRadius: '999px',
+                color: review.jdMatch.score >= 80 ? '#4CAF6E' : review.jdMatch.score >= 60 ? '#FFB800' : '#DA3036',
+                background: review.jdMatch.score >= 80 ? 'rgba(76,175,110,0.1)' : review.jdMatch.score >= 60 ? 'rgba(255,184,0,0.1)' : 'rgba(218,48,54,0.08)',
+                border: `1px solid ${review.jdMatch.score >= 80 ? 'rgba(76,175,110,0.25)' : review.jdMatch.score >= 60 ? 'rgba(255,184,0,0.25)' : 'rgba(218,48,54,0.25)'}`,
+              }}>
+                {review.jdMatch.label}
+              </span>
+            </div>
 
-        <button
-          onClick={handleShare}
-          className="premium-btn"
-          style={{
-            height: '46px',
-            padding: '0 28px',
-            background: 'rgba(255,255,255,0.025)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '12px',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            transition: 'all 0.25s var(--ease-expo)',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'var(--accent-border)';
-            e.currentTarget.style.background = 'var(--accent-dim)';
-            e.currentTarget.style.transform = 'translateY(-1.5px)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--border-subtle)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.025)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          Share Results
-        </button>
+            {/* Card body */}
+            <div style={{ padding: '24px', display:'flex', flexDirection:'column', gap:'24px' }}>
+              {/* Score + bar */}
+              <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                <div style={{ display:'flex', alignItems:'baseline', gap:'6px' }}>
+                  <span style={{ fontFamily:'var(--font-mono)', fontSize:'clamp(40px,7vw,64px)', fontWeight:800, color:'var(--accent)', lineHeight:1, letterSpacing:'-0.04em' }}>
+                    {review.jdMatch.score}
+                  </span>
+                  <span style={{ fontFamily:'var(--font-mono)', fontSize:'18px', color:'var(--text-muted)' }}>/100</span>
+                  <span style={{ fontFamily:'var(--font-mono)', fontSize:'11px', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', marginLeft:'8px' }}>
+                    fit for this role
+                  </span>
+                </div>
+                <div style={{ height:'3px', background:'var(--border-subtle)', borderRadius:'999px', overflow:'hidden' }}>
+                  <div style={{
+                    height:'100%',
+                    width:`${review.jdMatch.score}%`,
+                    background: review.jdMatch.score >= 80 ? '#4CAF6E' : review.jdMatch.score >= 60 ? '#FFB800' : '#DA3036',
+                    borderRadius:'999px',
+                    transition:'width 1.2s cubic-bezier(0.16,1,0.3,1)',
+                  }} />
+                </div>
+              </div>
 
-        <button
-          onClick={handleDownloadPdf}
-          disabled={isGeneratingPdf}
-          className="premium-btn"
-          style={{
-            height: '46px',
-            padding: '0 28px',
-            background: 'rgba(255,255,255,0.025)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '12px',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
-            opacity: isGeneratingPdf ? 0.6 : 1,
-            transition: 'all 0.25s var(--ease-expo)',
-          }}
-          onMouseEnter={e => {
-            if (isGeneratingPdf) return;
-            e.currentTarget.style.borderColor = 'var(--accent-border)';
-            e.currentTarget.style.background = 'var(--accent-dim)';
-            e.currentTarget.style.transform = 'translateY(-1.5px)';
-          }}
-          onMouseLeave={e => {
-            if (isGeneratingPdf) return;
-            e.currentTarget.style.borderColor = 'var(--border-subtle)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.025)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
-        </button>
+              {/* Recommendation quote */}
+              <div style={{
+                padding: '14px 18px',
+                borderLeft: '2px solid var(--accent)',
+                background: 'rgba(255,255,255,0.02)',
+                borderRadius: '0 8px 8px 0',
+              }}>
+                <p style={{ fontSize:'13px', color:'var(--text-secondary)', lineHeight:1.7, fontStyle:'italic', margin:0 }}>
+                  "{review.jdMatch.recommendation}"
+                </p>
+              </div>
 
-        {/* Floating Toast Notification */}
-        {toastVisible && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--accent)] text-xs font-mono px-4 py-2 rounded shadow-lg animate-fade-in duration-200 text-center max-w-[280px] sm:max-w-none">
-            {toastMessage}
+              {/* Matched + Missing skills grid */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px,1fr))', gap:'20px' }}>
+                {/* Matched */}
+                <div>
+                  <p style={{ fontFamily:'var(--font-mono)', fontSize:'10px', letterSpacing:'0.14em', textTransform:'uppercase', color:'#4CAF6E', marginBottom:'10px', fontWeight:700 }}>
+                    ✓ Matched Skills — {review.jdMatch.matchedSkills.length}
+                  </p>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                    {review.jdMatch.matchedSkills.map((skill, i) => (
+                      <span key={i} style={{
+                        fontFamily:'var(--font-mono)', fontSize:'11px',
+                        color:'#4CAF6E',
+                        background:'rgba(76,175,110,0.08)',
+                        border:'1px solid rgba(76,175,110,0.22)',
+                        borderRadius:'999px', padding:'3px 10px',
+                      }}>{skill}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Missing */}
+                <div>
+                  <p style={{ fontFamily:'var(--font-mono)', fontSize:'10px', letterSpacing:'0.14em', textTransform:'uppercase', color:'#DA3036', marginBottom:'10px', fontWeight:700 }}>
+                    ✗ Missing Skills — {review.jdMatch.missingSkills.length}
+                  </p>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                    {review.jdMatch.missingSkills.map((skill, i) => (
+                      <span key={i} style={{
+                        fontFamily:'var(--font-mono)', fontSize:'11px',
+                        color:'#DA3036',
+                        background:'rgba(218,48,54,0.06)',
+                        border:'1px solid rgba(218,48,54,0.2)',
+                        borderRadius:'999px', padding:'3px 10px',
+                      }}>{skill}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
+
+        {/* ── 4. DETAILED BREAKDOWN (Horizontal 5-column grid) ── */}
+        <div ref={detailsRef} className="opacity-0 flex flex-col gap-4">
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <h3 style={{
+              display:'flex', alignItems:'center', gap:'8px',
+              fontFamily:'var(--font-mono)', fontSize:'10px',
+              letterSpacing:'0.16em', textTransform:'uppercase',
+              color:'var(--text-muted)',
+            }}>
+              <span style={{ width:'2px', height:'14px', background:'var(--accent)', borderRadius:'2px' }} />
+              Detailed Breakdown
+            </h3>
+            {hasJD && (
+              <span style={{
+                fontFamily:'var(--font-mono)', fontSize:'9px',
+                letterSpacing:'0.1em', textTransform:'uppercase',
+                color:'var(--accent)',
+                background:'var(--accent-dim)',
+                border:'1px solid var(--accent-border)',
+                borderRadius:'999px', padding:'2px 10px',
+              }}>
+                Tailored to JD
+              </span>
+            )}
+          </div>
+
+          <div ref={cardsRef} className="opacity-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {review.sections.map((sec) => (
+              <FeedbackSection
+                key={sec.title}
+                title={sec.title}
+                score={sec.score}
+                issues={sec.issues}
+                suggestions={sec.suggestions}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* ── 5. TWO COLUMN GRID (Keywords + Top Issues) ── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+          gap: '32px',
+          alignItems: 'start',
+        }}>
+          {/* Keywords */}
+          <div ref={keywordsRef} className="opacity-0">
+            {/* Header with JD label */}
+            <h3 style={{
+              display:'flex', alignItems:'center', justifyContent:'space-between',
+              fontFamily:'var(--font-mono)', fontSize:'10px',
+              letterSpacing:'0.16em', textTransform:'uppercase',
+              color:'var(--text-muted)', marginBottom:'12px',
+            }}>
+              <span style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <span style={{ width:'2px', height:'14px', background:'var(--accent)', borderRadius:'2px' }} />
+                {hasJD ? 'Keywords from JD' : 'Keyword Analysis'}
+              </span>
+              {hasJD && (
+                <span style={{
+                  fontFamily:'var(--font-mono)', fontSize:'9px',
+                  color:'var(--accent)', letterSpacing:'0.1em',
+                  textTransform:'uppercase',
+                }}>
+                  {review.keywords.filter(k => k.found).length}/{review.keywords.length} found
+                </span>
+              )}
+            </h3>
+            <KeywordChecker keywords={review.keywords} hasJD={hasJD} />
+          </div>
+
+          {/* Top Critical Issues */}
+          <div ref={issuesRef} className="opacity-0" style={{
+            background:'var(--bg-card)',
+            border:'1px solid var(--border-subtle)',
+            borderRadius:'12px',
+            padding:'20px 22px',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          }}>
+            <h3 style={{
+              display:'flex', alignItems:'center', gap:'8px',
+              fontFamily:'var(--font-mono)', fontSize:'10px',
+              letterSpacing:'0.16em', textTransform:'uppercase',
+              color:'#DA3036', marginBottom:'16px',
+            }}>
+              <span style={{ width:'2px', height:'14px', background:'#DA3036', borderRadius:'2px' }} />
+              {hasJD ? 'Critical Gaps for This Role' : 'Top Critical Issues'}
+            </h3>
+            <ul style={{ display:'flex', flexDirection:'column', gap:'0' }}>
+              {review.topIssues.map((issue, idx) => (
+                <li key={idx} style={{
+                  display:'flex', alignItems:'flex-start', gap:'12px',
+                  padding:'10px 0',
+                  borderBottom: idx < review.topIssues.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                }}>
+                  <span style={{
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    width:'20px', height:'20px', borderRadius:'4px',
+                    background:'rgba(218,48,54,0.08)',
+                    border:'1px solid rgba(218,48,54,0.2)',
+                    color:'#DA3036',
+                    fontFamily:'var(--font-mono)', fontSize:'10px', fontWeight:700,
+                    flexShrink:0, marginTop:'1px',
+                  }}>
+                    {idx + 1}
+                  </span>
+                  <p style={{ fontSize:'13px', color:'var(--text-secondary)', lineHeight:1.65, margin:0 }}>
+                    {issue}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* ── 6. ACTION BUTTONS ── */}
+        <div ref={actionRef} className="opacity-0" style={{
+          display:'flex', alignItems:'center', justifyContent:'center',
+          gap:'12px', paddingTop:'16px', flexWrap:'wrap',
+          position: 'relative'
+        }}>
+          <button
+            onClick={() => router.push('/')}
+            className="magnetic-btn-analyze"
+            style={{
+              padding:'12px 28px',
+              background:'var(--accent)',
+              color:'var(--bg-primary)',
+              border:'1px solid var(--accent)',
+              borderRadius:'8px',
+              fontFamily:'var(--font-mono)',
+              fontSize:'11px',
+              fontWeight:700,
+              letterSpacing:'0.1em',
+              textTransform:'uppercase',
+              cursor:'pointer',
+            }}
+          >
+            Review another →
+          </button>
+          <button
+            onClick={handleShare}
+            style={{
+              padding:'12px 28px',
+              background:'transparent',
+              color:'var(--text-secondary)',
+              border:'1px solid var(--border-subtle)',
+              borderRadius:'8px',
+              fontFamily:'var(--font-mono)',
+              fontSize:'11px',
+              fontWeight:700,
+              letterSpacing:'0.1em',
+              textTransform:'uppercase',
+              cursor:'pointer',
+              transition:'border-color 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+          >
+            Share Results
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isGeneratingPdf}
+            style={{
+              padding:'12px 28px',
+              background:'transparent',
+              color:'var(--text-secondary)',
+              border:'1px solid var(--border-subtle)',
+              borderRadius:'8px',
+              fontFamily:'var(--font-mono)',
+              fontSize:'11px',
+              fontWeight:700,
+              letterSpacing:'0.1em',
+              textTransform:'uppercase',
+              cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
+              opacity: isGeneratingPdf ? 0.6 : 1,
+              transition:'border-color 0.2s',
+            }}
+            onMouseEnter={e => {
+              if (isGeneratingPdf) return;
+              e.currentTarget.style.borderColor = 'var(--border-hover)';
+            }}
+            onMouseLeave={e => {
+              if (isGeneratingPdf) return;
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            }}
+          >
+            {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
+          </button>
+
+          {/* Floating Toast Notification */}
+          {toastVisible && (
+            <div style={{
+              position: 'absolute',
+              top: '-48px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--accent)',
+              fontSize: '11px',
+              fontFamily: 'var(--font-mono)',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              textAlign: 'center',
+              zIndex: 10,
+              whiteSpace: 'nowrap',
+            }}>
+              {toastMessage}
+            </div>
+          )}
+        </div>
       </div>
-      </div> {/* Close center content container */}
     </main>
   );
 }
