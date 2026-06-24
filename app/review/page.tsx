@@ -188,15 +188,10 @@ function ReviewPageContent() {
       style={{
         position: 'relative',
         minHeight: '100vh',
+        width: '100%',
         background: 'var(--bg-primary)',
         color: 'var(--text-primary)',
-        width: '100%',
-        maxWidth: '1120px',
-        margin: '0 auto',
-        padding: 'clamp(32px, 5vw, 80px) var(--nav-side)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '48px',
+        overflow: 'hidden',
       }}
     >
       {/* Background elements */}
@@ -220,27 +215,26 @@ function ReviewPageContent() {
         }} />
       </div>
 
+      {/* Center content container layout */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: '100%',
+          maxWidth: '1120px',
+          margin: '0 auto',
+          padding: 'clamp(24px, 5vw, 64px) var(--nav-side)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '36px',
+        }}
+      >
+
       {/* Back button segment - Minimal text style */}
       <div ref={backBtnRef} className="opacity-0 flex justify-start items-center no-print" style={{ position: 'relative', zIndex: 1 }}>
         <button
           onClick={() => router.push('/')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--font-label)',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0',
-            transition: 'color 0.2s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors font-mono text-[11px] uppercase tracking-[0.12em] flex items-center gap-2 cursor-pointer bg-transparent border-none p-0"
         >
           ← BACK
         </button>
@@ -249,17 +243,17 @@ function ReviewPageContent() {
       {/* Hero section overall ATS score - Full width, no box container */}
       <div 
         ref={heroRef} 
-        className="opacity-0 flex flex-col md:flex-row md:items-center gap-[24px] md:gap-[48px] w-full"
-        style={{ paddingBottom: '40px', borderBottom: '1px solid var(--border-subtle)', position: 'relative', zIndex: 1 }}
+        className="opacity-0 flex flex-col md:flex-row md:items-center gap-8 w-full pb-10 border-b border-[var(--border-subtle)]"
+        style={{ position: 'relative', zIndex: 1 }}
       >
         {/* visual circular progress ring (uses new CircularScore component) */}
         <div style={{ flexShrink: 0 }}>
-          <CircularScore score={review.overallScore} size={150} />
+          <CircularScore score={review.overallScore} size={160} />
         </div>
 
         {/* overall summary analysis context */}
         <div className="space-y-3 text-center md:text-left flex-1">
-          <h2 className="text-3xl font-extrabold font-display text-white tracking-tight">Overall Assessment</h2>
+          <h2 className="text-3xl font-extrabold font-display text-white tracking-tight leading-tight">Overall Assessment</h2>
           <p className="text-[var(--text-secondary)] text-base leading-relaxed">{review.summary}</p>
         </div>
       </div>
@@ -324,7 +318,19 @@ function ReviewPageContent() {
         </div>
 
         {/* critical top issues listings segment */}
-        <div ref={issuesRef} className="opacity-0 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-4 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+        <div 
+          ref={issuesRef} 
+          className="opacity-0 shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '24px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+          }}
+        >
           <h3 style={{
             display: 'flex',
             alignItems: 'center',
@@ -338,13 +344,35 @@ function ReviewPageContent() {
             <span style={{ width: '2px', height: '14px', background: 'var(--danger)', borderRadius: '2px', flexShrink: 0 }} />
             Top Critical Issues
           </h3>
-          <ul className="space-y-3.5 pt-2">
+          <ul style={{ display: 'flex', flexDirection: 'column', gap: '16px', listStyle: 'none', margin: 0, padding: 0 }}>
             {review.topIssues.map((issue, idx) => (
-              <li key={issue} className="flex items-start gap-3.5 text-[var(--text-secondary)] text-sm leading-relaxed">
-                <span className="flex items-center justify-center w-5.5 h-5.5 rounded bg-[rgba(244,63,94,0.08)] border border-[rgba(244,63,94,0.2)] text-[var(--danger)] font-bold font-mono text-xs flex-shrink-0">
+              <li key={issue} style={{ display: 'flex', alignItems: 'start', gap: '14px' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '4px',
+                  background: '#FF5252',
+                  color: '#FFFFFF',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                  marginTop: '2px',
+                }}>
                   {idx + 1}
                 </span>
-                <p className="mt-0.5">{issue}</p>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.65,
+                  margin: 0,
+                  flex: 1,
+                }}>
+                  {issue}
+                </p>
               </li>
             ))}
           </ul>
@@ -354,61 +382,66 @@ function ReviewPageContent() {
       {/* review reset trigger action with clipboard share */}
       <div 
         ref={actionRef} 
-        className="opacity-0 no-print"
-        style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', paddingTop: '24px', position: 'relative', zIndex: 1 }}
+        className="opacity-0 flex items-center justify-center gap-6 pt-12 pb-6 flex-wrap no-print"
+        style={{ position:'relative', zIndex:1 }}
       >
         <button
           onClick={() => router.push('/')}
-          className="magnetic-btn-analyze"
+          className="premium-btn magnetic-btn-analyze"
           style={{
-            height: '44px',
-            padding: '0 24px',
+            height: '46px',
+            padding: '0 28px',
             background: 'var(--accent)',
-            border: 'none',
-            borderRadius: '8px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--font-sm)',
-            fontWeight: 700,
             color: 'var(--bg-primary)',
-            letterSpacing: '0.06em',
-            cursor: 'pointer',
-            transition: 'box-shadow 0.2s, transform 0.2s',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onMouseEnter={e => gsap.to(e.currentTarget, { boxShadow: '0 0 16px var(--accent-glow)', scale: 1.015, duration: 0.2 })}
-          onMouseLeave={e => gsap.to(e.currentTarget, { boxShadow: 'none', scale: 1, duration: 0.2 })}
-        >
-          Review another resume →
-        </button>
-        
-        <button
-          onClick={handleShare}
-          style={{
-            height: '44px',
-            padding: '0 24px',
-            background: 'transparent',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '8px',
+            border: '1px solid var(--accent)',
+            borderRadius: '6px',
             fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--font-sm)',
+            fontSize: '12px',
             fontWeight: 700,
-            color: 'var(--text-secondary)',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
             cursor: 'pointer',
-            transition: 'border-color 0.2s, color 0.2s',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            transition: 'all 0.25s var(--ease-expo)',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'var(--accent)';
-            e.currentTarget.style.color = 'var(--text-primary)';
+            e.currentTarget.style.boxShadow = '0 0 20px var(--accent-glow)';
+            e.currentTarget.style.transform = 'translateY(-1.5px)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          Review another &rarr;
+        </button>
+
+        <button
+          onClick={handleShare}
+          className="premium-btn"
+          style={{
+            height: '46px',
+            padding: '0 28px',
+            background: 'rgba(255,255,255,0.025)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '6px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            transition: 'all 0.25s var(--ease-expo)',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'var(--accent-border)';
+            e.currentTarget.style.background = 'var(--accent-dim)';
+            e.currentTarget.style.transform = 'translateY(-1.5px)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.borderColor = 'var(--border-subtle)';
-            e.currentTarget.style.color = 'var(--text-secondary)';
+            e.currentTarget.style.background = 'rgba(255,255,255,0.025)';
+            e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
           Share Results
@@ -417,43 +450,37 @@ function ReviewPageContent() {
         <button
           onClick={handleDownloadPdf}
           disabled={isGeneratingPdf}
+          className="premium-btn"
           style={{
-            height: '44px',
-            padding: '0 24px',
-            background: 'transparent',
+            height: '46px',
+            padding: '0 28px',
+            background: 'rgba(255,255,255,0.025)',
+            color: 'var(--text-primary)',
             border: '1px solid var(--border-subtle)',
-            borderRadius: '8px',
+            borderRadius: '6px',
             fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--font-sm)',
+            fontSize: '12px',
             fontWeight: 700,
-            color: 'var(--text-secondary)',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
             cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'border-color 0.2s, color 0.2s',
+            opacity: isGeneratingPdf ? 0.6 : 1,
+            transition: 'all 0.25s var(--ease-expo)',
           }}
           onMouseEnter={e => {
-            if (!isGeneratingPdf) {
-              e.currentTarget.style.borderColor = 'var(--accent)';
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }
+            if (isGeneratingPdf) return;
+            e.currentTarget.style.borderColor = 'var(--accent-border)';
+            e.currentTarget.style.background = 'var(--accent-dim)';
+            e.currentTarget.style.transform = 'translateY(-1.5px)';
           }}
           onMouseLeave={e => {
+            if (isGeneratingPdf) return;
             e.currentTarget.style.borderColor = 'var(--border-subtle)';
-            e.currentTarget.style.color = 'var(--text-secondary)';
+            e.currentTarget.style.background = 'rgba(255,255,255,0.025)';
+            e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
-          {isGeneratingPdf ? (
-            <>
-              <span className="spinner" />
-              <span>Generating...</span>
-            </>
-          ) : (
-            'Download PDF'
-          )}
+          {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
         </button>
 
         {/* Floating Toast Notification */}
@@ -463,6 +490,7 @@ function ReviewPageContent() {
           </div>
         )}
       </div>
+      </div> {/* Close center content container */}
     </main>
   );
 }

@@ -191,3 +191,80 @@ body::before {
 
 /* Accent transition on theme toggle */
 :root { transition: --accent 0s; }
+
+/* Premium card hover shine and glow */
+.premium-card {
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.35s var(--ease-expo), box-shadow 0.35s var(--ease-expo), transform 0.35s var(--ease-expo) !important;
+}
+
+.premium-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08) 20%,
+    rgba(255, 255, 255, 0.16) 60%,
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.75s var(--ease-expo);
+  pointer-events: none;
+}
+
+.premium-card:hover::after {
+  left: 150%;
+}
+
+.premium-card:hover {
+  border-color: var(--accent) !important;
+  box-shadow: 0 8px 24px var(--accent-glow) !important;
+  transform: translateY(-2px);
+}
+
+/* Hide scrollbar tracks globally on helper elements */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Premium button hover shine sweep */
+.premium-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--ease-expo) !important;
+}
+
+.premium-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12) 20%,
+    rgba(255, 255, 255, 0.22) 60%,
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.75s var(--ease-expo);
+  pointer-events: none;
+}
+
+.premium-btn:hover::after {
+  left: 150%;
+}
+
+

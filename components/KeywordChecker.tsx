@@ -33,7 +33,17 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
   };
 
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl p-6 space-y-6">
+    <div 
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: '12px',
+        padding: '24px 28px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '24px',
+      }}
+    >
       {/* Title section and metrics summary */}
       <div className="border-b border-[var(--border-subtle)] pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -44,7 +54,7 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
             ATS systems scan for target keywords. Review which skills were successfully parsed.
           </p>
         </div>
-        <div className="self-start sm:self-center font-mono text-[11px] uppercase tracking-wider text-[var(--accent)] bg-[rgba(99,102,241,0.06)] border border-[rgba(99,102,241,0.2)] px-3 py-1.5 rounded-full shrink-0 font-bold">
+        <div className="self-start sm:self-center font-mono text-[11px] uppercase tracking-wider text-[var(--accent)] bg-[rgba(99,102,241,0.06)] border border-[rgba(99,102,241,0.2)] px-3 py-1.5 rounded shrink-0 font-bold">
           {foundCount} / {totalKeywords} keywords found
         </div>
       </div>
@@ -71,11 +81,11 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 style={{
-                  background: 'rgba(147,185,158,0.08)',
-                  border: '1px solid rgba(147,185,158,0.20)',
-                  color: '#93B99E',
-                  borderRadius: '999px',
-                  padding: '3px 11px',
+                  background: 'rgba(76,175,110,0.08)',
+                  border: '1px solid rgba(76,175,110,0.20)',
+                  color: '#4CAF6E',
+                  borderRadius: '4px',
+                  padding: '4px 10px',
                   fontSize: 'var(--font-sm)',
                   fontFamily: 'var(--font-mono)',
                   display: 'flex',
@@ -121,8 +131,8 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
                   background: 'rgba(218,48,54,0.06)',
                   border: '1px solid rgba(218,48,54,0.15)',
                   color: '#DA3036',
-                  borderRadius: '999px',
-                  padding: '3px 11px',
+                  borderRadius: '4px',
+                  padding: '4px 10px',
                   fontSize: 'var(--font-sm)',
                   fontFamily: 'var(--font-mono)',
                   display: 'flex',
