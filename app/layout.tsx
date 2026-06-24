@@ -37,6 +37,7 @@ export default function RootLayout({
     // font CSS vars + dark bg — html root pe apply ho rahe hain
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${syne.variable} ${inter.variable}`}
       style={{
         background: 'var(--bg-primary)',

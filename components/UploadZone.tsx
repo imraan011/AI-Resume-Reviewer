@@ -18,7 +18,7 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
 
   // magnetic button pull effect setup
@@ -29,33 +29,21 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
     };
   }, { scope: btnRef });
 
-  // error shake animation using useGSAP dependencies tracking
-  useGSAP(() => {
+  // Error appear hone par GSAP shake transition trigger karein
+  useEffect(() => {
     if (errorMsg && errorRef.current) {
-      gsap.fromTo(
-        errorRef.current,
-        { x: -8 },
-        { x: 0, duration: 0.4, ease: 'elastic.out(1, 0.3)' }
-      );
+      gsap.from(errorRef.current, { x: -6, duration: 0.35, ease: 'elastic.out(1,0.4)' });
     }
-  }, { dependencies: [errorMsg] });
+  }, [errorMsg]);
 
-  // GSAP button state changes
+  // onEnter: active state me hover glow scale apply karein
   const onEnter = () => {
     if (isLoading || !file) return;
-    gsap.to(btnRef.current, {
-      scale: 1.02,
-      duration: 0.2,
-      ease: 'power2.out',
-    });
+    gsap.to(btnRef.current, { scale: 1.015, boxShadow: '0 0 28px var(--accent-glow)', duration: 0.2 });
   };
 
   const onLeave = () => {
-    gsap.to(btnRef.current, {
-      scale: 1,
-      duration: 0.2,
-      ease: 'power2.out',
-    });
+    gsap.to(btnRef.current, { scale: 1, boxShadow: '0 0 0px transparent', duration: 0.2 });
   };
 
   const onDown = () => {
@@ -64,15 +52,16 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
   };
 
   const onUp = () => {
-    gsap.to(btnRef.current, { scale: 1, duration: 0.15 });
+    if (isLoading || !file) return;
+    gsap.to(btnRef.current, { scale: 1.015, duration: 0.15 });
   };
 
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    if (dropZoneRef.current) {
-      gsap.to(dropZoneRef.current, {
+    if (dropRef.current) {
+      gsap.to(dropRef.current, {
         scale: 1.01,
         duration: 0.2,
         ease: 'power2.out',
@@ -82,8 +71,8 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
 
   const handleDragLeave = () => {
     setIsDragging(false);
-    if (dropZoneRef.current) {
-      gsap.to(dropZoneRef.current, {
+    if (dropRef.current) {
+      gsap.to(dropRef.current, {
         scale: 1,
         duration: 0.15,
         ease: 'power2.out',
@@ -94,14 +83,14 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
   const validateAndSetFile = (selectedFile: File) => {
     setErrorMsg('');
 
-    // must be PDF
+    // custom validation logic: format check (PDF only)
     if (selectedFile.type !== 'application/pdf') {
       setErrorMsg('Invalid file type. Please upload a PDF file only.');
       setFile(null);
       return;
     }
 
-    // size limitation (max 5MB)
+    // size limitation check (max 5MB)
     if (selectedFile.size > 5 * 1024 * 1024) {
       setErrorMsg('File is too large. Maximum size is 5MB.');
       setFile(null);
@@ -114,8 +103,8 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    if (dropZoneRef.current) {
-      gsap.to(dropZoneRef.current, {
+    if (dropRef.current) {
+      gsap.to(dropRef.current, {
         scale: 1,
         duration: 0.15,
         ease: 'power2.out',
@@ -143,7 +132,7 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
   };
 
   const handleUploadClick = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent triggering parent click browse
+    e.stopPropagation(); // parent dropZone click event ko prevent karein
     if (!file || isLoading) return;
     try {
       setErrorMsg('');
@@ -155,126 +144,102 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
     }
   };
 
-  const resetFile = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFile(null);
-    setErrorMsg('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const truncateFileName = (name: string) => {
-    if (name.length <= 30) return name;
-    return name.slice(0, 27) + '...';
-  };
-
   return (
-    <div className="w-full flex flex-col gap-5">
-      {/* Outer wrapper: minimalist border and backdrop blur */}
-      <div className="border border-[var(--border-subtle)] rounded-2xl p-8 bg-[rgba(255,255,255,0.015)] backdrop-blur-sm">
-        <div
-          ref={dropZoneRef}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={triggerBrowse}
-          className={`w-full min-h-[180px] rounded-xl flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-colors duration-250
-            ${!file ? 'border border-dashed border-neutral-800 hover:border-neutral-700/80' : ''}
-            ${isDragging ? 'border-[var(--accent)] bg-[var(--accent-dim)]' : ''}
-            ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="application/pdf"
-            className="hidden"
-            disabled={isLoading}
-          />
+    <div className="w-full flex flex-col gap-4">
+      {/* Hidden file input element */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="application/pdf"
+        className="hidden"
+        disabled={isLoading}
+      />
 
-          {!file ? (
-            <div className="flex flex-col items-center gap-3">
-              {/* Large indigo upload SVG icon */}
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--accent)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="transition-transform duration-250"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <div>
-                <p className="text-white font-medium font-display text-[16px] tracking-tight">
-                  Drop your resume here
-                </p>
-                <p className="text-[var(--text-muted)] text-[12px] font-mono mt-1">
-                  PDF up to 5MB
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3 w-full">
-              {/* Checkmark circle indigo icon */}
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--accent)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              <div className="space-y-1 w-full max-w-sm">
-                <p className="text-white font-medium text-[15px] break-all">
-                  {truncateFileName(file.name)}
-                </p>
-                <p className="text-[var(--text-secondary)] text-[12px] font-mono">
-                  {formatFileSize(file.size)}
-                </p>
-                <button
-                  type="button"
-                  onClick={resetFile}
-                  disabled={isLoading}
-                  className="text-[12px] text-[var(--text-secondary)] hover:text-white underline transition-colors cursor-pointer mt-1"
-                >
-                  Change file
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* DROP ZONE (the clickable drag area) */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={triggerBrowse}
+        ref={dropRef}
+        style={{
+          minHeight: '168px',
+          border: `1.5px dashed ${isDragging ? 'var(--accent)' : 'var(--border-subtle)'}`,
+          borderRadius: '14px',
+          background: isDragging ? 'var(--accent-dim)' : 'transparent',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          cursor: isLoading ? 'not-allowed' : 'pointer',
+          transition: 'border-color 0.25s var(--ease-expo), background 0.25s var(--ease-expo)',
+          padding: '32px 24px',
+          opacity: isLoading ? 0.5 : 1,
+        }}
+      >
+        {file ? (
+          /* FILE SELECTED STATE */
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            {/* Checkmark circle SVG */}
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+            <p style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '15px', fontFamily: 'var(--font-display)' }}>
+              {file.name.length > 30 ? file.name.slice(0, 27) + '...' : file.name}
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', fontFamily: 'var(--font-mono)' }}>
+              {(file.size / 1024).toFixed(0)} KB
+            </p>
+            <button
+              onClick={e => { e.stopPropagation(); setFile(null); setErrorMsg(''); }}
+              style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', marginTop: '4px' }}
+            >
+              × Remove
+            </button>
+          </div>
+        ) : (
+          /* DEFAULT STATE */
+          <>
+            {/* Upload SVG — uses var(--accent) */}
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: 600, fontFamily: 'var(--font-display)', textAlign: 'center' }}>
+              Drop your resume here
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textAlign: 'center' }}>
+              or{' '}
+              <span style={{ color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}>
+                browse files
+              </span>
+              {' '}· PDF up to 5MB
+            </p>
+          </>
+        )}
       </div>
 
-      {/* Error container with shake trigger */}
+      {/* ERROR MESSAGE */}
       {errorMsg && (
-        <div
-          ref={errorRef}
-          className="text-[var(--danger)] text-sm text-center font-medium bg-[rgba(244,63,94,0.05)] border border-[rgba(244,63,94,0.1)] rounded-lg p-3"
-        >
+        <div ref={errorRef} style={{
+          color: 'var(--danger)',
+          fontSize: 'var(--font-sm)',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          background: 'rgba(218,48,54,0.06)',
+          border: '1px solid rgba(218,48,54,0.15)',
+          textAlign: 'center',
+          fontFamily: 'var(--font-mono)',
+        }}>
           {errorMsg}
         </div>
       )}
 
-      {/* Action button */}
+      {/* ANALYZE BUTTON */}
       <div className={!file || isLoading ? 'cursor-not-allowed w-full' : 'w-full'}>
         <button
           ref={btnRef}
@@ -284,21 +249,33 @@ export default function UploadZone({ onUpload, isLoading, loadingText }: UploadZ
           onMouseLeave={onLeave}
           onMouseDown={onDown}
           onMouseUp={onUp}
-          className={`magnetic-btn-analyze w-full h-[56px] rounded-lg font-display font-bold text-[14px] uppercase tracking-[0.08em] transition-all duration-200 flex items-center justify-center gap-2.5
-            ${
-              file && !isLoading
-                ? 'bg-[var(--accent)] text-white cursor-pointer hover:shadow-[0_0_24px_var(--accent-glow)]'
-                : 'bg-neutral-900 text-neutral-500 pointer-events-none'
-            }
-          `}
+          className="magnetic-btn-analyze"
+          style={{
+            width: '100%',
+            height: '52px',
+            background: file && !isLoading ? 'var(--accent)' : 'var(--bg-hover)',
+            color: file && !isLoading ? 'var(--bg-primary)' : 'var(--text-muted)',
+            border: 'none',
+            borderRadius: '10px',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'var(--font-sm)',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: file && !isLoading ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            transition: 'box-shadow 0.3s var(--ease-expo)',
+          }}
         >
           {isLoading ? (
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <span>{loadingText || 'Analyzing...'}</span>
-            </div>
+            <>
+              <span className="spinner" /> Analyzing
+            </>
           ) : (
-            'Analyze Resume \u2192'
+            'Analyze Resume →'
           )}
         </button>
       </div>
