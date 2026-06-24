@@ -59,32 +59,32 @@ export default function GreetingIntro({ onComplete }: GreetingIntroProps) {
     const tl = gsap.timeline();
     tlRef.current = tl;
 
-    // cycle greetings
+    // har ek greeting ko cycle kar rahe hain (ab total 5 seconds ke target ke mutabik set kiya hai)
     GREETINGS.forEach(({ text: word, accent }) => {
       tl.call(() => {
         text.textContent = word;
         text.style.color = accent ? 'var(--accent)' : '#ffffff';
       });
-      tl.fromTo(text, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
-      tl.to(text, { opacity: 0, y: -20, duration: 0.3, delay: 0.4 });
+      tl.fromTo(text, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.18, ease: 'power2.out' });
+      tl.to(text, { opacity: 0, y: -20, duration: 0.15, delay: 0.1 });
     });
 
-    // ─── AI Resume Reviewer Title Card Phase ────────────────────────
+    // Title card ka animation phase
     tl.call(() => {
       text.innerHTML = 'AI Resume <span style="color: var(--accent)">Reviewer</span>';
     });
-    tl.fromTo(text, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
-    tl.to(text, { delay: 1.2, duration: 0 }); // holding
+    tl.fromTo(text, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' });
+    tl.to(text, { delay: 0.5, duration: 0 }); // holding duration ko 5 seconds timeline ke hisab se set kiya
 
-    // signal parent coordinate
+    // parent component ko signal karein ki intro complete ho gaya hai
     tl.call(() => {
       sessionStorage.setItem(SESSION_KEY, 'true');
       onCompleteRef.current?.(false); // skipped=false
     });
 
-    // curtain animation (text fades out/slides up in parallel)
-    tl.to(overlay, { yPercent: -100, duration: 0.9, ease: 'power3.inOut' });
-    tl.to(text, { opacity: 0, y: -40, duration: 0.6, ease: 'power2.in' }, '<');
+    // curtain animation (overlay upar slide hoga aur text fade out hoga)
+    tl.to(overlay, { yPercent: -100, duration: 0.65, ease: 'power3.inOut' });
+    tl.to(text, { opacity: 0, y: -40, duration: 0.5, ease: 'power2.in' }, '<');
 
     return () => {
       tlRef.current?.kill();
