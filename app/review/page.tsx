@@ -9,11 +9,12 @@ import CircularScore from '@/components/CircularScore';
 import SectionScoreBar from '@/components/SectionScoreBar';
 import JDMatchCard from '@/components/JDMatchCard';
 import ReviewSkeleton from '@/components/ReviewSkeleton';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { gsap } from '@/lib/gsap';
 import { useGSAP } from '@gsap/react';
 import { cardHoverEffect } from '@/lib/animations';
 
-export default function ReviewPage() {
+function ReviewPageContent() {
   const router = useRouter();
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -296,5 +297,13 @@ export default function ReviewPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function ReviewPage() {
+  return (
+    <ErrorBoundary>
+      <ReviewPageContent />
+    </ErrorBoundary>
   );
 }

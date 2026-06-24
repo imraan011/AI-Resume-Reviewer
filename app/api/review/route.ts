@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { analyzeResume } from '@/lib/aiClient';
 
+export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
 // simple in-memory database to store client request timestamps
@@ -39,12 +40,12 @@ export async function POST(request: Request) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || '127.0.0.1';
     const limitCheck = isRateLimited(ip);
     
-    // checks client rate limits
+    // client rate limits check karein
     if (limitCheck.limited) {
       const headers = new Headers();
       headers.set('Retry-After', String(limitCheck.retryAfterSeconds));
       return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
+        { error: 'Too many requests. Please try again later.', code: 'RATE_LIMIT_EXCEEDED' },
         { status: 429, headers }
       );
     }
@@ -52,29 +53,31 @@ export async function POST(request: Request) {
     const { resumeText, jobDescription } = await request.json();
 
     if (!resumeText || typeof resumeText !== 'string' || !resumeText.trim()) {
-      return NextResponse.json({ error: 'Missing resume text input.' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing resume text input.', code: 'BAD_REQUEST' }, { status: 400 });
     }
 
-    // Call Groq API analysis service with optional job description matching
+    // Optional job description matching ke saath Groq API service call karein
     const result = await analyzeResume(resumeText, jobDescription);
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('[AI_REVIEW_ROUTE_ERROR]', error);
+    // Error ko timestamp ke saath log karein
+    console.error(`[${new Date().toISOString()}] [AI_REVIEW_ROUTE_ERROR]`, error);
     
-    // Check if it's a rate limit error from the SDK provider
+    // Check karein agar AI provider se rate limit error (429) aaya hai
     if (error && typeof error === 'object' && ('status' in error || 'statusCode' in error)) {
       const status = (error as any).status || (error as any).statusCode;
       if (status === 429) {
         const headers = new Headers();
         headers.set('Retry-After', '60');
         return NextResponse.json(
-          { error: 'AI provider rate limit reached. Please try again later.' },
+          { error: 'AI provider rate limit reached. Please try again later.', code: 'AI_PROVIDER_RATE_LIMIT' },
           { status: 429, headers }
         );
       }
     }
 
-    return NextResponse.json({ error: 'Failed to process resume review.' }, { status: 500 });
+    // Client ko raw stack trace share nahi karenge
+    return NextResponse.json({ error: 'Failed to process resume review.', code: 'INTERNAL_SERVER_ERROR' }, { status: 500 });
   }
 }

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Syne, Inter } from 'next/font/google';
 import SmoothScroll from '@/components/SmoothScroll';
 import CustomCursor from '@/components/CustomCursor';
+import ThemeProvider from '@/lib/ThemeProvider';
+import ThemeToggle from '@/components/ThemeToggle';
 import './globals.css';
 
 // headings ke liye — bold geometric feel
@@ -41,12 +43,24 @@ export default function RootLayout({
         color: 'var(--text-primary)',
       }}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.documentElement.style.colorScheme = t;
+          })();
+        `}} />
+      </head>
       <body>
-        {/* SmoothScroll Lenis + GSAP ticker ko initialize karta hai */}
-        <SmoothScroll>
-          <CustomCursor />
-          {children}
-        </SmoothScroll>
+        <ThemeProvider>
+          {/* SmoothScroll Lenis + GSAP ticker ko initialize karta hai */}
+          <SmoothScroll>
+            <CustomCursor />
+            {children}
+          </SmoothScroll>
+          <ThemeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );
