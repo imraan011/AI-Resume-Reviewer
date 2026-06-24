@@ -1,39 +1,43 @@
-// ─── AI Review Result — shared types across review page + API ─────────────────
+// AI review results ke shared TypeScript definitions
 
 export interface KeywordMatch {
   word: string;
-  /** true = resume mein mila, false = missing hai */
-  found: boolean;
+  found: boolean; // true agar resume me keyword match ho gaya ho
+  importance: 'high' | 'medium' | 'low';
+  fromJD?: boolean; // true agar ye keyword Job Description se aaya ho
 }
 
-export interface ReviewSection {
-  /** Section heading — "Work Experience", "Skills", etc. */
-  title: string;
-  /** Score 0-100 for this section */
-  score: number;
-  /** Detailed AI feedback paragraph */
-  feedback: string;
-  /** Optional bullet suggestions */
-  suggestions?: string[];
+export interface Section {
+  title: string; // section ka title (jaise 'Skills', 'Experience')
+  score: number; // 0-100 score range
+  feedback: string; // AI ka detailed feedback description
+  suggestions?: string[]; // improvements suggest karne ke liye bullet points
 }
 
 export interface ReviewResult {
-  /** ATS compatibility score 0-100 */
-  atsScore: number;
-  /** One-line brutal summary */
-  summary: string;
-  /** Detailed per-section breakdown */
-  sections: ReviewSection[];
-  /** Keywords expected vs found */
+  overallScore: number; // overall ATS score (0-100)
+  summary: string; // short assessment summary
+  sections: Section[];
   keywords: KeywordMatch[];
-  /** ISO timestamp */
-  analyzedAt: string;
+  topIssues: string[]; // key critical issues checklist
+
+  // agar JD provide kiya gaya ho tabhi matches highlight honge
+  jdMatch?: {
+    score: number; // resume aur JD compatibility score (0-100)
+    label: string; // "Strong Match" | "Good Match" | "Partial Match" | "Weak Match"
+    missingSkills: string[]; // JD ki missed skills list
+    matchedSkills: string[]; // match hone waali skills
+    jdKeywords: string[]; // JD se extract kiye gaye keywords
+    recommendation: string; // AI recommendation checklist
+  };
+
+  hasJD: boolean; // check karne ke liye ki JD available hai ya nahi
 }
 
 // ─── Mock data — placeholder jab tak AI API integrate na ho ──────────────────
 
 export const MOCK_REVIEW: ReviewResult = {
-  atsScore: 72,
+  overallScore: 72,
   summary:
     'Strong technical profile, but the resume lacks quantified achievements and uses passive language throughout. ATS systems will struggle with the non-standard section headers.',
   sections: [
@@ -77,16 +81,21 @@ export const MOCK_REVIEW: ReviewResult = {
     },
   ],
   keywords: [
-    { word: 'TypeScript',  found: true  },
-    { word: 'React',       found: true  },
-    { word: 'Node.js',     found: true  },
-    { word: 'REST API',    found: true  },
-    { word: 'SQL',         found: false },
-    { word: 'Docker',      found: false },
-    { word: 'AWS',         found: false },
-    { word: 'CI/CD',       found: true  },
-    { word: 'GraphQL',     found: false },
-    { word: 'Agile/Scrum', found: true  },
+    { word: 'TypeScript',  found: true,  importance: 'high' },
+    { word: 'React',       found: true,  importance: 'high' },
+    { word: 'Node.js',     found: true,  importance: 'high' },
+    { word: 'REST API',    found: true,  importance: 'medium' },
+    { word: 'SQL',         found: false, importance: 'medium' },
+    { word: 'Docker',      found: false, importance: 'low' },
+    { word: 'AWS',         found: false, importance: 'high' },
+    { word: 'CI/CD',       found: true,  importance: 'medium' },
+    { word: 'GraphQL',     found: false, importance: 'low' },
+    { word: 'Agile/Scrum', found: true,  importance: 'low' },
   ],
-  analyzedAt: new Date().toISOString(),
+  topIssues: [
+    'Quantifiable achievements are missing in work experience bullets.',
+    'Non-standard section headers used.',
+    'Passive verbs used instead of strong action verbs.',
+  ],
+  hasJD: false,
 };

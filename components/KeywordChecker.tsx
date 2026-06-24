@@ -6,9 +6,10 @@ import { gsap } from '@/lib/gsap';
 
 interface KeywordCheckerProps {
   keywords: KeywordMatch[];
+  hasJD?: boolean;
 }
 
-export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
+export default function KeywordChecker({ keywords, hasJD = false }: KeywordCheckerProps) {
   const foundKeywords = keywords.filter((kw) => kw.found);
   const missingKeywords = keywords.filter((kw) => !kw.found);
   const totalKeywords = keywords.length;
@@ -48,7 +49,7 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
       <div className="border-b border-[var(--border-subtle)] pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-[var(--text-primary)] font-display">
-            Keyword Analysis
+            {hasJD ? 'Keywords from Job Description' : 'Keyword Analysis'}
           </h3>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             ATS systems scan for target keywords. Review which skills were successfully parsed.
@@ -96,6 +97,22 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
               >
                 <span>✓</span>
                 <span>{kw.word}</span>
+                {kw.fromJD && (
+                  <span style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '8px',
+                    letterSpacing: '0.08em',
+                    color: 'var(--accent)',
+                    background: 'var(--accent-dim)',
+                    borderRadius: '3px',
+                    padding: '1px 4px',
+                    marginLeft: '2px',
+                    verticalAlign: 'middle',
+                    textTransform: 'uppercase',
+                  }}>
+                    JD
+                  </span>
+                )}
                 {kw.importance === 'high' && (
                   <svg
                     width="10"
@@ -143,6 +160,22 @@ export default function KeywordChecker({ keywords }: KeywordCheckerProps) {
               >
                 <span>✗</span>
                 <span>{kw.word}</span>
+                {kw.fromJD && (
+                  <span style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '8px',
+                    letterSpacing: '0.08em',
+                    color: 'var(--accent)',
+                    background: 'var(--accent-dim)',
+                    borderRadius: '3px',
+                    padding: '1px 4px',
+                    marginLeft: '2px',
+                    verticalAlign: 'middle',
+                    textTransform: 'uppercase',
+                  }}>
+                    JD
+                  </span>
+                )}
                 {kw.importance === 'high' && (
                   <svg
                     width="10"

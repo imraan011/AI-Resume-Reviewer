@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const { resumeText, jobDescription } = await request.json();
 
     if (!resumeText || typeof resumeText !== 'string' || !resumeText.trim()) {
-      return NextResponse.json({ error: 'Missing resume text input.', code: 'BAD_REQUEST' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing resume text.' }, { status: 400 });
     }
 
     // Optional job description matching ke saath Groq API service call karein

@@ -24,23 +24,27 @@ export interface KeywordMatch {
   word: string;
   found: boolean;
   importance: 'high' | 'medium' | 'low';
+  fromJD?: boolean; // true agar ye keyword Job Description se aaya ho
 }
 
 export interface JdMatch {
-  matchScore: number;
-  matchedSkills: string[];
-  missingSkills: string[];
-  recommendation: string;
+  score: number; // 0-100 — resume vs JD fit % (matchScore se score renamed)
+  label: string; // "Strong Match" | "Good Match" | "Partial Match" | "Weak Match"
+  missingSkills: string[]; // skills in JD but not in resume
+  matchedSkills: string[]; // skills in both JD and resume
+  jdKeywords: string[]; // all keywords extracted from JD
+  recommendation: string; // 1-2 line tailored advice
 }
 
 // Complete AI review engine analysis response
 export interface ReviewResult {
   overallScore: number;
+  summary: string;
   sections: FeedbackSection[];
   keywords: KeywordMatch[];
-  summary: string;
   topIssues: string[];
-  jdMatch: JdMatch | null;
+  jdMatch?: JdMatch | null; // only present when JD was provided
+  hasJD: boolean; // was JD provided?
 }
 
 // File upload flow aur transition states

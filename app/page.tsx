@@ -11,6 +11,8 @@ import CustomCursor from '@/components/CustomCursor';
 export default function Home() {
   const [loadingStep, setLoadingStep] = useState<'idle' | 'extracting' | 'reviewing'>('idle');
   const [greetingDone, setGreetingDone] = useState(false);
+  const [jobDescription, setJobDescription] = useState('');
+  const [jdMode, setJdMode] = useState(false);
   const router = useRouter();
 
   const isLoading = loadingStep !== 'idle';
@@ -20,6 +22,7 @@ export default function Home() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const subtextRef = useRef<HTMLParagraphElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
+  const jdRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
 
   const onGreetingDone = () => setGreetingDone(true);
@@ -61,7 +64,7 @@ export default function Home() {
       const reviewRes = await fetch('/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeText: text }),
+        body: JSON.stringify({ resumeText: text, jobDescription: jobDescription.trim() || undefined }),
       });
       if (!reviewRes.ok) {
         let msg = 'Failed to generate review.';
@@ -83,6 +86,7 @@ export default function Home() {
 
       // Session cache update karein
       sessionStorage.setItem('reviewResult', JSON.stringify(result));
+      sessionStorage.setItem('jobDescription', jobDescription);
 
       // Page exit transitions trigger karein
       await new Promise<void>(resolve => {
@@ -111,7 +115,8 @@ export default function Home() {
       .fromTo(headingRef.current, { opacity:0, y:40  }, { opacity:1, y:0, duration:0.75 }, '-=0.35')
       .fromTo(subtextRef.current, { opacity:0, y:24  }, { opacity:1, y:0, duration:0.65 }, '-=0.5')
       .fromTo(uploadRef.current,  { opacity:0, y:28, scale:0.99 }, { opacity:1, y:0, scale:1, duration:0.7 }, '-=0.45')
-      .fromTo(statsRef.current,   { opacity:0, y:16  }, { opacity:1, y:0, duration:0.55 }, '-=0.4');
+      .fromTo(statsRef.current,   { opacity:0, y:16  }, { opacity:1, y:0, duration:0.55 }, '-=0.4')
+      .fromTo(jdRef.current,      { opacity:0, y:12  }, { opacity:1, y:0, duration:0.5  }, '-=0.35');
   }, { dependencies: [greetingDone] });
 
   return (
@@ -222,6 +227,131 @@ export default function Home() {
           <UploadZone onUpload={handleUpload} isLoading={isLoading} />
         </div>
 
+        {/* JD Toggle + Input */}
+        <div ref={jdRef} style={{ opacity: 0, display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+          {/* Toggle row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{
+                width: '2px', height: '12px',
+                background: jdMode ? 'var(--accent)' : 'var(--border-hover)',
+                borderRadius: '2px',
+                transition: 'background 0.3s',
+                display: 'inline-block',
+              }} />
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--font-label)',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: jdMode ? 'var(--accent)' : 'var(--text-muted)',
+                transition: 'color 0.3s',
+              }}>
+                Tailor to Job Description
+              </span>
+              {jdMode && (
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.1em',
+                  color: 'var(--accent)',
+                  background: 'var(--accent-dim)',
+                  border: '1px solid var(--accent-border)',
+                  borderRadius: '999px',
+                  padding: '1px 7px',
+                  textTransform: 'uppercase',
+                }}>
+                  ACTIVE
+                </span>
+              )}
+            </div>
+            {/* Toggle switch */}
+            <button
+              onClick={() => setJdMode(p => !p)}
+              aria-label="Toggle JD mode"
+              style={{
+                width: '40px', height: '22px',
+                borderRadius: '999px',
+                border: '1px solid var(--border-subtle)',
+                background: jdMode ? 'var(--accent)' : 'var(--bg-hover)',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.25s cubic-bezier(0.16,1,0.3,1)',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{
+                position: 'absolute',
+                top: '3px',
+                left: jdMode ? '20px' : '3px',
+                width: '14px', height: '14px',
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.25s cubic-bezier(0.16,1,0.3,1)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              }} />
+            </button>
+          </div>
+          {/* JD Textarea — appears when toggle is ON */}
+          {jdMode && (
+            <div style={{
+              border: '1px solid var(--accent-border)',
+              borderRadius: '14px',
+              background: 'var(--accent-dim)',
+              overflow: 'hidden',
+              animation: 'fadeSlideIn 0.3s cubic-bezier(0.16,1,0.3,1)',
+            }}>
+              {/* Textarea header */}
+              <div style={{
+                padding: '10px 16px',
+                borderBottom: '1px solid var(--accent-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--accent)',
+                }}>
+                  Paste Job Description
+                </span>
+                {jobDescription.length > 0 && (
+                  <span style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '10px',
+                    color: 'var(--text-muted)',
+                  }}>
+                    {jobDescription.length} chars
+                  </span>
+                )}
+              </div>
+              {/* Textarea */}
+              <textarea
+                value={jobDescription}
+                onChange={e => setJobDescription(e.target.value)}
+                placeholder="Paste the full job description here — the AI will extract keywords and requirements automatically..."
+                rows={6}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  padding: '14px 16px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '13px',
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.6,
+                  resize: 'none',
+                  caretColor: 'var(--accent)',
+                }}
+              />
+            </div>
+          )}
+        </div>
+
         {/* Stats segment row */}
         <div ref={statsRef} style={{
           opacity: 0,
@@ -232,11 +362,18 @@ export default function Home() {
           borderTop: '1px solid var(--border-subtle)',
           paddingTop: '24px',
         }}>
-          {[
-            { val: 'ATS',   label: 'Score Check'    },
-            { val: '5×',    label: 'Sections'        },
-            { val: 'PDF',   label: 'Instant Results' },
-          ].map((s, i) => (
+          {(jdMode
+            ? [
+                { val: 'ATS',  label: 'Score Check' },
+                { val: 'JD',   label: 'Match Score' },
+                { val: '5×',   label: 'Sections'    },
+              ]
+            : [
+                { val: 'ATS',  label: 'Score Check'    },
+                { val: '5×',   label: 'Sections'       },
+                { val: 'PDF',  label: 'Instant Results' },
+              ]
+          ).map((s, i) => (
             <div key={i} style={{
               flex: 1,
               textAlign: 'center',

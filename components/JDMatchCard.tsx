@@ -25,7 +25,7 @@ export default function JDMatchCard({ jdMatch }: JDMatchCardProps) {
 
       // easeOutExpo curve calculation logic for count progress
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      setCurrentScore(Math.round(easeProgress * jdMatch.matchScore));
+      setCurrentScore(Math.round(easeProgress * jdMatch.score));
 
       if (progress < 1) {
         requestAnimationFrame(step);
@@ -47,7 +47,7 @@ export default function JDMatchCard({ jdMatch }: JDMatchCardProps) {
     return '#10B981'; // var(--success)
   };
 
-  const activeColor = getScoreColor(jdMatch.matchScore);
+  const activeColor = getScoreColor(jdMatch.score);
   const size = 80;
   const strokeWidth = 6;
   const halfSize = size / 2;

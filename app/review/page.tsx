@@ -16,6 +16,8 @@ import { cardHoverEffect } from '@/lib/animations';
 
 function ReviewPageContent() {
   const router = useRouter();
+  const storedJD = typeof window !== 'undefined' ? sessionStorage.getItem('jobDescription') || '' : '';
+  const hasJD = Boolean(storedJD && storedJD.trim().length > 50);
   const [review, setReview] = useState<ReviewResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
@@ -107,8 +109,12 @@ function ReviewPageContent() {
     tl.fromTo(heroRef.current, { opacity: 0, y: 25 }, { opacity: 1, y: 0, duration: 0.65 }, '-=0.25');
 
     // JD Match details panel if present
-    if (jdMatchRef.current) {
-      tl.fromTo(jdMatchRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.35');
+    if (jdMatchRef.current && review.jdMatch) {
+      tl.fromTo(jdMatchRef.current,
+        { opacity:0, y:24 },
+        { opacity:1, y:0, duration:0.7, ease:'expo.out' },
+        '-=0.4'
+      );
     }
 
     // Score cards stagger reveal
@@ -260,8 +266,183 @@ function ReviewPageContent() {
 
       {/* Job Description Match Analysis (only if jdMatch is provided) */}
       {review.jdMatch && (
-        <div ref={jdMatchRef} className="opacity-0 w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <JDMatchCard jdMatch={review.jdMatch} />
+        <div ref={jdMatchRef} style={{
+          opacity: 0,
+          padding: '24px 28px',
+          border: '1px solid var(--accent-border)',
+          borderRadius: '14px',
+          background: 'var(--accent-dim)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          position: 'relative',
+          zIndex: 1,
+        }}>
+          {/* Header row */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:'12px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+              <span style={{
+                width: '3px', height: '18px',
+                background: 'var(--accent)',
+                borderRadius: '2px', flexShrink: 0,
+              }} />
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--font-label)',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: 'var(--accent)',
+              }}>
+                JD Match Score
+              </span>
+            </div>
+
+            {/* Match label badge */}
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '10px',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: review.jdMatch.score >= 80 ? 'var(--success)'
+                    : review.jdMatch.score >= 60 ? 'var(--warning)'
+                    : '#DA3036',
+              border: `1px solid ${
+                review.jdMatch.score >= 80 ? 'rgba(76,175,110,0.3)'
+                : review.jdMatch.score >= 60 ? 'rgba(255,184,0,0.3)'
+                : 'rgba(218,48,54,0.3)'
+              }`,
+              background: review.jdMatch.score >= 80 ? 'rgba(76,175,110,0.07)'
+                        : review.jdMatch.score >= 60 ? 'rgba(255,184,0,0.07)'
+                        : 'rgba(218,48,54,0.06)',
+              borderRadius: '999px',
+              padding: '3px 12px',
+            }}>
+              {review.jdMatch.label}
+            </span>
+          </div>
+
+          {/* Score + Progress bar */}
+          <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
+            <div style={{ display:'flex', alignItems:'baseline', gap:'6px' }}>
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'clamp(36px, 6vw, 52px)',
+                fontWeight: 800,
+                color: 'var(--accent)',
+                lineHeight: 1,
+                letterSpacing: '-0.03em',
+              }}>
+                {review.jdMatch.score}
+              </span>
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '16px',
+                color: 'var(--text-muted)',
+                fontWeight: 400,
+              }}>
+                /100
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{
+              height: '3px',
+              background: 'var(--border-subtle)',
+              borderRadius: '999px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${review.jdMatch.score}%`,
+                background: review.jdMatch.score >= 80 ? 'var(--success)'
+                          : review.jdMatch.score >= 60 ? 'var(--warning)'
+                          : '#DA3036',
+                borderRadius: '999px',
+                transition: 'width 1.2s cubic-bezier(0.16,1,0.3,1)',
+              }} />
+            </div>
+          </div>
+
+          {/* Recommendation */}
+          <p style={{
+            fontSize: '13px',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.65,
+            fontStyle: 'italic',
+            margin: 0,
+            paddingTop: '4px',
+            borderTop: '1px solid var(--accent-border)',
+          }}>
+            "{review.jdMatch.recommendation}"
+          </p>
+
+          {/* Two columns: matched + missing */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+          }}>
+
+            {/* Matched Skills */}
+            <div>
+              <p style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--success)',
+                marginBottom: '10px',
+              }}>
+                ✓ Matched — {review.jdMatch.matchedSkills.length}
+              </p>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                {review.jdMatch.matchedSkills.map((skill, i) => (
+                  <span key={i} style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: 'var(--success)',
+                    background: 'rgba(76,175,110,0.08)',
+                    border: '1px solid rgba(76,175,110,0.2)',
+                    borderRadius: '999px',
+                    padding: '3px 10px',
+                  }}>
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Missing Skills */}
+            <div>
+              <p style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: '#DA3036',
+                marginBottom: '10px',
+              }}>
+                ✗ Missing — {review.jdMatch.missingSkills.length}
+              </p>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                {review.jdMatch.missingSkills.map((skill, i) => (
+                  <span key={i} style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: '#DA3036',
+                    background: 'rgba(218,48,54,0.06)',
+                    border: '1px solid rgba(218,48,54,0.18)',
+                    borderRadius: '999px',
+                    padding: '3px 10px',
+                  }}>
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+          </div>
         </div>
       )}
 
@@ -314,7 +495,7 @@ function ReviewPageContent() {
       >
         {/* matching keywords component check */}
         <div ref={keywordsRef} className="opacity-0">
-          <KeywordChecker keywords={review.keywords} />
+          <KeywordChecker keywords={review.keywords} hasJD={review.hasJD} />
         </div>
 
         {/* critical top issues listings segment */}
