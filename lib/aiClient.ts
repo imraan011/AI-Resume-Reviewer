@@ -172,7 +172,7 @@ export async function analyzeResume(
     : `Resume text to analyze:\n\n${resumeText}`;
 
   const response = await getGroqClient().chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-20b',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user',   content: userMessage },
